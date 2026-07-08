@@ -1,0 +1,23 @@
+[package]
+name = "resmonx"
+version = "0.1.0"
+description = "Monitor de recursos para Windows"
+authors = ["Zierchz"]
+edition = "2021"
+
+[lib]
+name = "resmonx_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-opener = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sysinfo = "0.36"
+netstat2 = "0.11"
+nvml-wrapper = "0.11"
+windows = { version = "0.62", features = ["Win32_Foundation", "Win32_System_Performance"] }
