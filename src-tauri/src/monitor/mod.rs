@@ -1,3 +1,4 @@
+pub mod control;
 mod cpufreq;
 mod etw;
 mod gpu;
@@ -40,6 +41,7 @@ pub struct MemorySnapshot {
 pub struct ProcessSnapshot {
     pid: u32,
     name: String,
+    exe: String,
     cpu: f32,
     memory: u64,
     virtual_memory: u64,
@@ -204,6 +206,10 @@ pub fn get_snapshot(state: tauri::State<MonitorState>) -> Snapshot {
             ProcessSnapshot {
                 pid,
                 name: p.name().to_string_lossy().into_owned(),
+                exe: p
+                    .exe()
+                    .map(|e| e.to_string_lossy().into_owned())
+                    .unwrap_or_default(),
                 cpu: p.cpu_usage() / cores as f32,
                 memory: p.memory(),
                 virtual_memory: p.virtual_memory(),

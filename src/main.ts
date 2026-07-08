@@ -1,4 +1,6 @@
 import { invoke } from "@tauri-apps/api/core";
+import { revealItemInDir } from "@tauri-apps/plugin-opener";
+import { writeText } from "@tauri-apps/plugin-clipboard-manager";
 
 interface CpuSnapshot {
   name: string;
@@ -25,6 +27,7 @@ interface MemorySnapshot {
 interface ProcessSnapshot {
   pid: number;
   name: string;
+  exe: string;
   cpu: number;
   memory: number;
   virtual_memory: number;
@@ -200,60 +203,108 @@ function renderTopbar(s: Snapshot) {
   document.getElementById("top-gpu")!.textContent = s.gpu ? `GPU ${s.gpu.utilization}%` : "GPU n/d";
 }
 
-function renderOverview(s: Snapshot) {
+// --- Cards canónicas (idénticas en Resumen y en cada sección) ---
+
+function cpuCard(s: Snapshot): string {
+  return card(
+    "CPU",
+    `${s.cpu.usage.toFixed(1)}%`,
+    `${esc(s.cpu.name)} · ${(s.cpu.freq_mhz / 1000).toFixed(2)} GHz efectivos · ${s.cpu.cores} núcleos`,
+    sparkline(history.cpu, 100, "#4fc3f7"),
+  );
+}
+
+function memCard(s: Snapshot): string {
+  return card(
+    "Memoria",
+    `${fmtBytes(s.memory.used)} / ${fmtBytes(s.memory.total)}`,
+    `${((s.memory.used / s.memory.total) * 100).toFixed(1)}% · swap ${fmtBytes(s.memory.swap_used)}`,
+    sparkline(history.mem, 100, "#ba68c8"),
+  );
+}
+
+function netCard(s: Snapshot): string {
   const rx = s.nics.reduce((a, n) => a + n.rx_bps, 0);
   const tx = s.nics.reduce((a, n) => a + n.tx_bps, 0);
+  return card(
+    "Red",
+    `↓ ${fmtBytes(rx, "/s")} · ↑ ${fmtBytes(tx, "/s")}`,
+    `${s.connections.length} conexiones activas`,
+    sparkline(history.rx, Math.max(...history.rx, 1024 * 128), "#81c784"),
+  );
+}
+
+function diskCard(s: Snapshot): string {
   const read = s.processes.reduce((a, p) => a + p.read_bps, 0);
   const write = s.processes.reduce((a, p) => a + p.write_bps, 0);
+  return card(
+    "Disco",
+    `R ${fmtBytes(read, "/s")} · W ${fmtBytes(write, "/s")}`,
+    "I/O agregado por procesos",
+    sparkline(history.write, Math.max(...history.write, 1024 * 512), "#ffb74d"),
+  );
+}
 
-  const cards = [
-    card(
-      "CPU",
-      `${s.cpu.usage.toFixed(1)}%`,
-      `${esc(s.cpu.name)} · ${(s.cpu.freq_mhz / 1000).toFixed(2)} GHz efectivos · ${s.cpu.cores} núcleos`,
-      sparkline(history.cpu, 100, "#4fc3f7"),
-    ),
-    card(
-      "Memoria",
-      `${fmtBytes(s.memory.used)} / ${fmtBytes(s.memory.total)}`,
-      `${((s.memory.used / s.memory.total) * 100).toFixed(1)}% · swap ${fmtBytes(s.memory.swap_used)}`,
-      sparkline(history.mem, 100, "#ba68c8"),
-    ),
-    card(
-      "Red",
-      `↓ ${fmtBytes(rx, "/s")} · ↑ ${fmtBytes(tx, "/s")}`,
-      `${s.connections.length} conexiones activas`,
-      sparkline(history.rx, Math.max(...history.rx, 1024 * 128), "#81c784"),
-    ),
-    card(
-      "Disco",
-      `R ${fmtBytes(read, "/s")} · W ${fmtBytes(write, "/s")}`,
-      "I/O agregado por procesos",
-      sparkline(history.write, Math.max(...history.write, 1024 * 512), "#ffb74d"),
-    ),
-  ];
-  if (s.gpu) {
-    cards.push(
-      card(
-        "GPU",
-        `${s.gpu.utilization}% · ${s.gpu.clock_core} MHz`,
-        `${esc(s.gpu.name)} · ${fmtBytes(s.gpu.mem_used)} VRAM · ${s.gpu.temp}°C · ${s.gpu.power_w.toFixed(1)} W · ${esc(s.gpu.pstate)}`,
-        sparkline(history.gpu, 100, "#e57373"),
-      ),
-    );
-  }
+function gpuCard(s: Snapshot): string {
+  if (!s.gpu) return "";
+  return card(
+    "GPU",
+    `${s.gpu.utilization}% · ${s.gpu.clock_core} MHz`,
+    `${esc(s.gpu.name)} · ${fmtBytes(s.gpu.mem_used)} VRAM · ${s.gpu.temp}°C · ${s.gpu.power_w.toFixed(1)} W · ${esc(s.gpu.pstate)}`,
+    sparkline(history.gpu, 100, "#e57373"),
+  );
+}
+
+function procRow(p: ProcessSnapshot, netByPid: Map<number, number>, etw: boolean): string {
+  const net = etw ? fmtBytes(netByPid.get(p.pid) ?? 0, "/s") : "—";
+  return `<tr data-pid="${p.pid}" data-name="${esc(p.name)}" data-exe="${esc(p.exe)}">
+    <td>${esc(p.name)}</td>
+    <td class="num">${p.pid}</td>
+    <td class="num">${p.cpu.toFixed(1)}</td>
+    <td class="num">${fmtBytes(p.memory)}</td>
+    <td class="num">${fmtBytes(p.read_bps + p.write_bps, "/s")}</td>
+    <td class="num">${net}</td>
+    <td class="num">${p.threads}</td>
+  </tr>`;
+}
+
+function serviceRows(s: Snapshot): string {
+  return [...s.services]
+    .sort((a, b) => {
+      const ra = a.state === "En ejecución" ? 0 : 1;
+      const rb = b.state === "En ejecución" ? 0 : 1;
+      return ra - rb || a.name.localeCompare(b.name);
+    })
+    .map(
+      (v) => `<tr>
+        <td>${esc(v.name)}</td>
+        <td>${esc(v.display)}</td>
+        <td class="num">${v.pid || ""}</td>
+        <td>${esc(v.state)}</td>
+      </tr>`,
+    )
+    .join("");
+}
+
+function renderOverview(s: Snapshot) {
+  const cards = [cpuCard(s), memCard(s), netCard(s), diskCard(s)];
+  if (s.gpu) cards.push(gpuCard(s));
   document.getElementById("overview-cards")!.innerHTML = cards.join("");
+
+  const netByPid = new Map(s.net_procs.map((p) => [p.pid, p.sent_bps + p.recv_bps]));
+  const procRows = s.processes
+    .slice(0, 60)
+    .map((p) => procRow(p, netByPid, s.etw))
+    .join("");
+  document.querySelector("#ov-proc-table tbody")!.innerHTML = procRows;
+
+  document.querySelector("#ov-svc-table tbody")!.innerHTML = serviceRows(s);
 }
 
 function renderCpu(s: Snapshot) {
   const totalThreads = s.processes.reduce((a, p) => a + p.threads, 0);
   document.getElementById("cpu-cards")!.innerHTML =
-    card(
-      "Uso global",
-      `${s.cpu.usage.toFixed(1)}%`,
-      esc(s.cpu.name),
-      sparkline(history.cpu, 100, "#4fc3f7"),
-    ) +
+    cpuCard(s) +
     card(
       "Frecuencia efectiva",
       `${(s.cpu.freq_mhz / 1000).toFixed(2)} GHz`,
@@ -323,12 +374,7 @@ function renderMemory(s: Snapshot) {
   const free = counters ? m.free : m.total - m.used;
 
   document.getElementById("mem-cards")!.innerHTML =
-    card(
-      "En uso",
-      `${fmtBytes(used)} / ${fmtBytes(m.total)}`,
-      `${((used / m.total) * 100).toFixed(1)}%`,
-      sparkline(history.mem, 100, "#ba68c8"),
-    ) +
+    memCard(s) +
     card(
       "Confirmada",
       `${fmtBytes(m.commit)}`,
@@ -389,7 +435,7 @@ function renderProcesses(s: Snapshot) {
   });
   const rows = procs
     .map(
-      (p) => `<tr>
+      (p) => `<tr data-pid="${p.pid}" data-name="${esc(p.name)}" data-exe="${esc(p.exe)}">
         <td>${esc(p.name)}</td>
         <td class="num">${p.pid}</td>
         <td class="num">${p.threads}</td>
@@ -414,6 +460,18 @@ function toggleEtw(noticeId: string, wrapId: string, etw: boolean) {
 }
 
 function renderNetwork(s: Snapshot) {
+  const tx = s.nics.reduce((a, n) => a + n.tx_bps, 0);
+  const activeNics = s.nics.filter((n) => n.rx_bps > 0 || n.tx_bps > 0).length;
+  document.getElementById("net-summary-cards")!.innerHTML =
+    netCard(s) +
+    card(
+      "Subida",
+      fmtBytes(tx, "/s"),
+      `${activeNics} interfaces activas`,
+      sparkline(history.tx, Math.max(...history.tx, 1024 * 128), "#64b5f6"),
+    ) +
+    card("Conexiones", `${s.connections.length}`, "TCP/UDP activas y en escucha", "");
+
   const nics = s.nics
     .filter((n) => n.rx_bps > 0 || n.tx_bps > 0 || s.nics.length <= 3)
     .map((n) => card(esc(n.name), `↓ ${fmtBytes(n.rx_bps, "/s")}`, `↑ ${fmtBytes(n.tx_bps, "/s")}`, ""))
@@ -479,7 +537,9 @@ function renderNetwork(s: Snapshot) {
 function renderDisk(s: Snapshot) {
   const read = s.processes.reduce((a, p) => a + p.read_bps, 0);
   const write = s.processes.reduce((a, p) => a + p.write_bps, 0);
+  const busiest = s.disks.reduce((m, d) => Math.max(m, d.active_pct), 0);
   document.getElementById("disk-cards")!.innerHTML =
+    diskCard(s) +
     card(
       "Lectura total",
       fmtBytes(read, "/s"),
@@ -491,7 +551,8 @@ function renderDisk(s: Snapshot) {
       fmtBytes(write, "/s"),
       "",
       sparkline(history.write, Math.max(...history.write, 1024 * 512), "#ffb74d"),
-    );
+    ) +
+    card("Unidad más activa", `${busiest.toFixed(0)}%`, `${s.disks.length} unidades`, "");
 
   const storageRows = s.disks
     .map((d) => {
@@ -569,6 +630,142 @@ function renderGpu(s: Snapshot) {
   document.querySelector("#gpu-table tbody")!.innerHTML = rows;
 }
 
+// --- Toast, confirmación y menú contextual ---
+
+function toast(msg: string, error = false) {
+  const el = document.createElement("div");
+  el.className = `toast${error ? " error" : ""}`;
+  el.textContent = msg;
+  document.getElementById("toast-host")!.appendChild(el);
+  setTimeout(() => el.remove(), 3200);
+}
+
+function confirmDialog(message: string): Promise<boolean> {
+  return new Promise((resolve) => {
+    const overlay = document.getElementById("confirm-overlay")!;
+    document.getElementById("confirm-msg")!.textContent = message;
+    overlay.hidden = false;
+    const done = (ok: boolean) => {
+      overlay.hidden = true;
+      okBtn.removeEventListener("click", onOk);
+      cancelBtn.removeEventListener("click", onCancel);
+      resolve(ok);
+    };
+    const okBtn = document.getElementById("confirm-ok")!;
+    const cancelBtn = document.getElementById("confirm-cancel")!;
+    const onOk = () => done(true);
+    const onCancel = () => done(false);
+    okBtn.addEventListener("click", onOk);
+    cancelBtn.addEventListener("click", onCancel);
+  });
+}
+
+interface CtxTarget {
+  pid: number;
+  name: string;
+  exe: string;
+}
+
+function closeCtxMenu() {
+  document.getElementById("ctx-menu")!.hidden = true;
+  document.querySelectorAll("tr.selected").forEach((r) => r.classList.remove("selected"));
+}
+
+async function runAction(action: string, t: CtxTarget) {
+  try {
+    if (action === "kill") {
+      if (await confirmDialog(`¿Finalizar el proceso "${t.name}" (PID ${t.pid})?`)) {
+        await invoke("kill_process", { pid: t.pid });
+        toast(`Proceso ${t.name} finalizado`);
+      }
+    } else if (action === "kill-tree") {
+      if (await confirmDialog(`¿Finalizar "${t.name}" (PID ${t.pid}) y todos sus procesos hijos?`)) {
+        await invoke("kill_process_tree", { pid: t.pid });
+        toast(`Árbol de ${t.name} finalizado`);
+      }
+    } else if (action === "suspend") {
+      await invoke("suspend_process", { pid: t.pid });
+      toast(`Proceso ${t.name} suspendido`);
+    } else if (action === "resume") {
+      await invoke("resume_process", { pid: t.pid });
+      toast(`Proceso ${t.name} reanudado`);
+    } else if (action === "reveal") {
+      await revealItemInDir(t.exe);
+    } else if (action === "copy") {
+      await writeText(`${t.name} (PID ${t.pid})`);
+      toast("Copiado al portapapeles");
+    }
+  } catch (e) {
+    toast(`Error: ${e}`, true);
+  }
+}
+
+function openCtxMenu(x: number, y: number, t: CtxTarget) {
+  const menu = document.getElementById("ctx-menu")!;
+  const hasExe = t.exe.length > 0;
+  const items = [
+    { action: "kill", label: "Finalizar proceso", cls: "danger" },
+    { action: "kill-tree", label: "Finalizar árbol de procesos", cls: "danger" },
+    { sep: true },
+    { action: "suspend", label: "Suspender" },
+    { action: "resume", label: "Reanudar" },
+    { sep: true },
+    { action: "reveal", label: "Abrir ubicación del archivo", disabled: !hasExe },
+    { action: "copy", label: "Copiar" },
+  ];
+  menu.innerHTML = items
+    .map((it) =>
+      it.sep
+        ? `<div class="ctx-sep"></div>`
+        : `<div class="ctx-item ${it.cls ?? ""}${it.disabled ? " disabled" : ""}" data-action="${it.action}">${it.label}</div>`,
+    )
+    .join("");
+  menu.hidden = false;
+  // ajustar para no salirse de la ventana
+  const rect = menu.getBoundingClientRect();
+  const px = Math.min(x, window.innerWidth - rect.width - 6);
+  const py = Math.min(y, window.innerHeight - rect.height - 6);
+  menu.style.left = `${Math.max(4, px)}px`;
+  menu.style.top = `${Math.max(4, py)}px`;
+
+  menu.querySelectorAll<HTMLElement>(".ctx-item[data-action]").forEach((el) => {
+    el.addEventListener(
+      "click",
+      () => {
+        closeCtxMenu();
+        runAction(el.dataset.action!, t);
+      },
+      { once: true },
+    );
+  });
+}
+
+function setupContextMenu() {
+  // funciona en cualquier tabla con filas data-pid (Resumen y Procesos)
+  document.addEventListener("contextmenu", (ev) => {
+    const e = ev as MouseEvent;
+    const row = (e.target as HTMLElement).closest("tr[data-pid]") as HTMLElement | null;
+    if (!row) return;
+    e.preventDefault();
+    document.querySelectorAll("tr.selected").forEach((r) => r.classList.remove("selected"));
+    row.classList.add("selected");
+    openCtxMenu(e.clientX, e.clientY, {
+      pid: Number(row.dataset.pid),
+      name: row.dataset.name ?? "",
+      exe: row.dataset.exe ?? "",
+    });
+  });
+
+  // cerrar el menú ante cualquier interacción externa
+  document.addEventListener("click", (e) => {
+    if (!(e.target as HTMLElement).closest("#ctx-menu")) closeCtxMenu();
+  });
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape") closeCtxMenu();
+  });
+  document.querySelector("main")!.addEventListener("scroll", closeCtxMenu, true);
+}
+
 function render(s: Snapshot) {
   renderTopbar(s);
   if (activeTab === "overview") renderOverview(s);
@@ -628,6 +825,8 @@ function setupUi() {
       if (lastSnapshot) render(lastSnapshot);
     });
   }
+
+  setupContextMenu();
 }
 
 setupUi();

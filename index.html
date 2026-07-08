@@ -29,168 +29,231 @@
 
     <main>
       <section id="view-overview" class="view active">
-        <div class="cards" id="overview-cards"></div>
+        <div class="split">
+          <aside class="split-aside">
+            <div class="cards stacked" id="overview-cards"></div>
+          </aside>
+          <div class="split-main">
+            <h2 class="section-title">Procesos</h2>
+            <div class="table-wrap short">
+              <table id="ov-proc-table">
+                <thead>
+                  <tr>
+                    <th>Proceso</th>
+                    <th>PID</th>
+                    <th>CPU %</th>
+                    <th>RAM</th>
+                    <th>Disco/s</th>
+                    <th>Red/s</th>
+                    <th>Hilos</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+            <h2 class="section-title">Servicios</h2>
+            <div class="table-wrap short">
+              <table id="ov-svc-table">
+                <thead>
+                  <tr>
+                    <th>Servicio</th>
+                    <th>Descripción</th>
+                    <th>PID</th>
+                    <th>Estado</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
       </section>
 
       <section id="view-cpu" class="view">
-        <div class="cards" id="cpu-cards"></div>
-        <h2 class="section-title">Núcleos lógicos</h2>
-        <div id="core-grid" class="core-grid"></div>
-        <h2 class="section-title">Procesos</h2>
-        <div class="table-wrap short">
-          <table id="cpu-proc-table">
-            <thead>
-              <tr>
-                <th>Proceso</th>
-                <th>PID</th>
-                <th>Hilos</th>
-                <th>CPU %</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-        </div>
-        <h2 class="section-title">Servicios</h2>
-        <input id="svc-filter" class="filter" type="text" placeholder="Filtrar servicios…" />
-        <div class="table-wrap short">
-          <table id="svc-table">
-            <thead>
-              <tr>
-                <th>Servicio</th>
-                <th>Descripción</th>
-                <th>PID</th>
-                <th>Estado</th>
-                <th>CPU %</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
+        <div class="split">
+          <aside class="split-aside">
+            <div class="cards stacked" id="cpu-cards"></div>
+          </aside>
+          <div class="split-main">
+            <h2 class="section-title">Núcleos lógicos</h2>
+            <div id="core-grid" class="core-grid"></div>
+            <h2 class="section-title">Procesos</h2>
+            <div class="table-wrap short">
+              <table id="cpu-proc-table">
+                <thead>
+                  <tr>
+                    <th>Proceso</th>
+                    <th>PID</th>
+                    <th>Hilos</th>
+                    <th>CPU %</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+            <h2 class="section-title">Servicios</h2>
+            <input id="svc-filter" class="filter" type="text" placeholder="Filtrar servicios…" />
+            <div class="table-wrap short">
+              <table id="svc-table">
+                <thead>
+                  <tr>
+                    <th>Servicio</th>
+                    <th>Descripción</th>
+                    <th>PID</th>
+                    <th>Estado</th>
+                    <th>CPU %</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
         </div>
       </section>
 
       <section id="view-memory" class="view">
-        <div class="cards" id="mem-cards"></div>
-        <h2 class="section-title">Memoria física</h2>
-        <div class="panel" id="mem-bar"></div>
-        <h2 class="section-title">Procesos</h2>
-        <div class="table-wrap">
-          <table id="mem-table">
-            <thead>
-              <tr>
-                <th>Proceso</th>
-                <th>PID</th>
-                <th>Memoria</th>
-                <th>Virtual</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
+        <div class="split">
+          <aside class="split-aside">
+            <div class="cards stacked" id="mem-cards"></div>
+          </aside>
+          <div class="split-main">
+            <h2 class="section-title">Memoria física</h2>
+            <div class="panel" id="mem-bar"></div>
+            <h2 class="section-title">Procesos</h2>
+            <div class="table-wrap">
+              <table id="mem-table">
+                <thead>
+                  <tr>
+                    <th>Proceso</th>
+                    <th>PID</th>
+                    <th>Memoria</th>
+                    <th>Virtual</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
         </div>
       </section>
 
       <section id="view-disk" class="view">
-        <div class="cards" id="disk-cards"></div>
-        <h2 class="section-title">Almacenamiento</h2>
-        <div class="table-wrap short">
-          <table id="storage-table">
-            <thead>
-              <tr>
-                <th>Unidad</th>
-                <th>Sistema</th>
-                <th>Activo</th>
-                <th>Cola</th>
-                <th>Libre</th>
-                <th>Total</th>
-                <th>Uso</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-        </div>
-        <h2 class="section-title">Actividad de disco por archivo</h2>
-        <div id="file-etw-notice" class="notice" hidden>
-          Ejecuta ResmonX como administrador para ver la actividad de disco por archivo.
-        </div>
-        <div class="table-wrap short" id="file-act-wrap" hidden>
-          <table id="file-act-table">
-            <thead>
-              <tr>
-                <th>Proceso</th>
-                <th>PID</th>
-                <th>Archivo</th>
-                <th>Lectura/s</th>
-                <th>Escritura/s</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-        </div>
-        <h2 class="section-title">Procesos con actividad de disco</h2>
-        <div class="table-wrap short">
-          <table id="disk-table">
-            <thead>
-              <tr>
-                <th>Proceso</th>
-                <th>PID</th>
-                <th>Lectura/s</th>
-                <th>Escritura/s</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
+        <div class="split">
+          <aside class="split-aside">
+            <div class="cards stacked" id="disk-cards"></div>
+          </aside>
+          <div class="split-main">
+            <h2 class="section-title">Almacenamiento</h2>
+            <div class="table-wrap short">
+              <table id="storage-table">
+                <thead>
+                  <tr>
+                    <th>Unidad</th>
+                    <th>Sistema</th>
+                    <th>Activo</th>
+                    <th>Cola</th>
+                    <th>Libre</th>
+                    <th>Total</th>
+                    <th>Uso</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+            <h2 class="section-title">Actividad de disco por archivo</h2>
+            <div id="file-etw-notice" class="notice" hidden>
+              Ejecuta ResmonX como administrador para ver la actividad de disco por archivo.
+            </div>
+            <div class="table-wrap short" id="file-act-wrap" hidden>
+              <table id="file-act-table">
+                <thead>
+                  <tr>
+                    <th>Proceso</th>
+                    <th>PID</th>
+                    <th>Archivo</th>
+                    <th>Lectura/s</th>
+                    <th>Escritura/s</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+            <h2 class="section-title">Procesos con actividad de disco</h2>
+            <div class="table-wrap short">
+              <table id="disk-table">
+                <thead>
+                  <tr>
+                    <th>Proceso</th>
+                    <th>PID</th>
+                    <th>Lectura/s</th>
+                    <th>Escritura/s</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
         </div>
       </section>
 
       <section id="view-network" class="view">
-        <div class="cards" id="nic-cards"></div>
-        <h2 class="section-title">Procesos con actividad de red</h2>
-        <div id="net-etw-notice" class="notice" hidden>
-          Ejecuta ResmonX como administrador para ver la actividad de red por proceso.
-        </div>
-        <div class="table-wrap short" id="net-proc-wrap" hidden>
-          <table id="net-proc-table">
-            <thead>
-              <tr>
-                <th>Proceso</th>
-                <th>PID</th>
-                <th>Enviado/s</th>
-                <th>Recibido/s</th>
-                <th>Total/s</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-        </div>
-        <h2 class="section-title">Conexiones TCP</h2>
-        <input id="conn-filter" class="filter" type="text" placeholder="Filtrar conexiones…" />
-        <div class="table-wrap short">
-          <table id="conn-table">
-            <thead>
-              <tr>
-                <th>Proceso</th>
-                <th>PID</th>
-                <th>Proto</th>
-                <th>Local</th>
-                <th>Remoto</th>
-                <th>Estado</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-        </div>
-        <h2 class="section-title">Puertos de escucha</h2>
-        <div class="table-wrap short">
-          <table id="listen-table">
-            <thead>
-              <tr>
-                <th>Proceso</th>
-                <th>PID</th>
-                <th>Proto</th>
-                <th>Dirección local</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
+        <div class="split">
+          <aside class="split-aside">
+            <div class="cards stacked" id="net-summary-cards"></div>
+          </aside>
+          <div class="split-main">
+            <h2 class="section-title">Por interfaz</h2>
+            <div class="cards" id="nic-cards"></div>
+            <h2 class="section-title">Procesos con actividad de red</h2>
+            <div id="net-etw-notice" class="notice" hidden>
+              Ejecuta ResmonX como administrador para ver la actividad de red por proceso.
+            </div>
+            <div class="table-wrap short" id="net-proc-wrap" hidden>
+              <table id="net-proc-table">
+                <thead>
+                  <tr>
+                    <th>Proceso</th>
+                    <th>PID</th>
+                    <th>Enviado/s</th>
+                    <th>Recibido/s</th>
+                    <th>Total/s</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+            <h2 class="section-title">Conexiones TCP</h2>
+            <input id="conn-filter" class="filter" type="text" placeholder="Filtrar conexiones…" />
+            <div class="table-wrap short">
+              <table id="conn-table">
+                <thead>
+                  <tr>
+                    <th>Proceso</th>
+                    <th>PID</th>
+                    <th>Proto</th>
+                    <th>Local</th>
+                    <th>Remoto</th>
+                    <th>Estado</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+            <h2 class="section-title">Puertos de escucha</h2>
+            <div class="table-wrap short">
+              <table id="listen-table">
+                <thead>
+                  <tr>
+                    <th>Proceso</th>
+                    <th>PID</th>
+                    <th>Proto</th>
+                    <th>Dirección local</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
         </div>
       </section>
 
@@ -216,21 +279,42 @@
       </section>
 
       <section id="view-gpu" class="view">
-        <div class="cards" id="gpu-cards"></div>
-        <div class="table-wrap">
-          <table id="gpu-table">
-            <thead>
-              <tr>
-                <th>Proceso</th>
-                <th>PID</th>
-                <th>Tipo</th>
-                <th>VRAM</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
+        <div class="split">
+          <aside class="split-aside">
+            <div class="cards stacked" id="gpu-cards"></div>
+          </aside>
+          <div class="split-main">
+            <h2 class="section-title">Procesos en la GPU</h2>
+            <div class="table-wrap">
+              <table id="gpu-table">
+                <thead>
+                  <tr>
+                    <th>Proceso</th>
+                    <th>PID</th>
+                    <th>Tipo</th>
+                    <th>VRAM</th>
+                  </tr>
+                </thead>
+                <tbody></tbody>
+              </table>
+            </div>
+          </div>
         </div>
       </section>
     </main>
+
+    <div id="ctx-menu" class="ctx-menu" hidden></div>
+
+    <div id="confirm-overlay" class="overlay" hidden>
+      <div class="dialog">
+        <div id="confirm-msg" class="dialog-msg"></div>
+        <div class="dialog-actions">
+          <button id="confirm-cancel" class="btn">Cancelar</button>
+          <button id="confirm-ok" class="btn btn-danger">Confirmar</button>
+        </div>
+      </div>
+    </div>
+
+    <div id="toast-host" class="toast-host"></div>
   </body>
 </html>
