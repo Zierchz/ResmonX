@@ -14,6 +14,12 @@ interface MemorySnapshot {
   used: number;
   swap_total: number;
   swap_used: number;
+  commit: number;
+  commit_limit: number;
+  standby: number;
+  modified: number;
+  free: number;
+  hard_faults_ps: number;
 }
 
 interface ProcessSnapshot {
@@ -21,6 +27,8 @@ interface ProcessSnapshot {
   name: string;
   cpu: number;
   memory: number;
+  virtual_memory: number;
+  threads: number;
   read_bps: number;
   write_bps: number;
 }
@@ -37,6 +45,24 @@ interface Connection {
   protocol: string;
   local: string;
   remote: string;
+  state: string;
+}
+
+interface DiskSnapshot {
+  name: string;
+  mount: string;
+  fs: string;
+  total: number;
+  available: number;
+  removable: boolean;
+  active_pct: number;
+  queue: number;
+}
+
+interface ServiceSnapshot {
+  name: string;
+  display: string;
+  pid: number;
   state: string;
 }
 
@@ -68,6 +94,8 @@ interface Snapshot {
   processes: ProcessSnapshot[];
   nics: NicSnapshot[];
   connections: Connection[];
+  disks: DiskSnapshot[];
+  services: ServiceSnapshot[];
   gpu: GpuSnapshot | null;
 }
 
@@ -82,6 +110,7 @@ const history = {
   gpu: [] as number[],
   read: [] as number[],
   write: [] as number[],
+  faults: [] as number[],
 };
 
 let activeTab = "overview";
@@ -134,6 +163,11 @@ function card(title: string, value: string, detail: string, spark: string): stri
     <div class="card-detail">${detail}</div>
     ${spark}
   </div>`;
+}
+
+function usageBar(pct: number, color: string): string {
+  const p = Math.max(0, Math.min(100, pct));
+  return `<span class="usage-bar"><span class="usage-fill" style="width:${p.toFixed(0)}%;background:${color}"></span></span>${p.toFixed(0)}%`;
 }
 
 function renderTopbar(s: Snapshot) {
@@ -189,6 +223,136 @@ function renderOverview(s: Snapshot) {
   document.getElementById("overview-cards")!.innerHTML = cards.join("");
 }
 
+function renderCpu(s: Snapshot) {
+  const totalThreads = s.processes.reduce((a, p) => a + p.threads, 0);
+  document.getElementById("cpu-cards")!.innerHTML =
+    card(
+      "Uso global",
+      `${s.cpu.usage.toFixed(1)}%`,
+      esc(s.cpu.name),
+      sparkline(history.cpu, 100, "#4fc3f7"),
+    ) +
+    card(
+      "Frecuencia efectiva",
+      `${(s.cpu.freq_mhz / 1000).toFixed(2)} GHz`,
+      `base ${(s.cpu.base_mhz / 1000).toFixed(2)} GHz`,
+      "",
+    ) +
+    card("Procesos", `${s.processes.length}`, `${totalThreads} hilos · ${s.cpu.cores} núcleos lógicos`, "");
+
+  document.getElementById("core-grid")!.innerHTML = s.cpu.per_core
+    .map(
+      (u, i) => `<div class="core-cell">
+        <div class="core-label"><span>N${i}</span><span>${u.toFixed(0)}%</span></div>
+        <div class="core-track"><div class="core-fill" style="width:${Math.min(u, 100).toFixed(0)}%"></div></div>
+      </div>`,
+    )
+    .join("");
+
+  const rows = s.processes
+    .slice(0, 15)
+    .map(
+      (p) => `<tr>
+        <td>${esc(p.name)}</td>
+        <td class="num">${p.pid}</td>
+        <td class="num">${p.threads}</td>
+        <td class="num">${p.cpu.toFixed(1)}</td>
+      </tr>`,
+    )
+    .join("");
+  document.querySelector("#cpu-proc-table tbody")!.innerHTML = rows;
+
+  const cpuByPid = new Map(s.processes.map((p) => [p.pid, p.cpu]));
+  const filter = (document.getElementById("svc-filter") as HTMLInputElement).value.toLowerCase();
+  let services = s.services;
+  if (filter) {
+    services = services.filter(
+      (v) =>
+        v.name.toLowerCase().includes(filter) ||
+        v.display.toLowerCase().includes(filter) ||
+        String(v.pid) === filter,
+    );
+  }
+  const svcRows = [...services]
+    .sort((a, b) => {
+      const ra = a.state === "En ejecución" ? 0 : 1;
+      const rb = b.state === "En ejecución" ? 0 : 1;
+      return ra - rb || a.name.localeCompare(b.name);
+    })
+    .map(
+      (v) => `<tr>
+        <td>${esc(v.name)}</td>
+        <td>${esc(v.display)}</td>
+        <td class="num">${v.pid || ""}</td>
+        <td>${esc(v.state)}</td>
+        <td class="num">${v.pid ? (cpuByPid.get(v.pid) ?? 0).toFixed(1) : ""}</td>
+      </tr>`,
+    )
+    .join("");
+  document.querySelector("#svc-table tbody")!.innerHTML = svcRows;
+}
+
+function renderMemory(s: Snapshot) {
+  const m = s.memory;
+  const counters = m.standby + m.modified + m.free > 0;
+  const used = counters ? Math.max(m.total - m.standby - m.modified - m.free, 0) : m.used;
+  const standby = counters ? m.standby : 0;
+  const modified = counters ? m.modified : 0;
+  const free = counters ? m.free : m.total - m.used;
+
+  document.getElementById("mem-cards")!.innerHTML =
+    card(
+      "En uso",
+      `${fmtBytes(used)} / ${fmtBytes(m.total)}`,
+      `${((used / m.total) * 100).toFixed(1)}%`,
+      sparkline(history.mem, 100, "#ba68c8"),
+    ) +
+    card(
+      "Confirmada",
+      `${fmtBytes(m.commit)}`,
+      m.commit_limit ? `límite ${fmtBytes(m.commit_limit)} · ${((m.commit / m.commit_limit) * 100).toFixed(0)}%` : "",
+      "",
+    ) +
+    card("En espera (caché)", fmtBytes(standby), `modificada ${fmtBytes(modified)}`, "") +
+    card(
+      "Fallos duros/s",
+      m.hard_faults_ps.toFixed(0),
+      "páginas leídas de disco por segundo",
+      sparkline(history.faults, Math.max(...history.faults, 10), "#ffb74d"),
+    );
+
+  const segs = [
+    { label: "En uso", value: used, color: "#ba68c8" },
+    { label: "Modificada", value: modified, color: "#ffb74d" },
+    { label: "En espera", value: standby, color: "#4fc3f7" },
+    { label: "Libre", value: free, color: "#37474f" },
+  ];
+  const bar = segs
+    .map((g) => `<div class="mem-seg" style="width:${((g.value / m.total) * 100).toFixed(2)}%;background:${g.color}"></div>`)
+    .join("");
+  const legend = segs
+    .map(
+      (g) => `<span class="legend-item"><span class="dot" style="background:${g.color}"></span>${g.label} · ${fmtBytes(g.value)}</span>`,
+    )
+    .join("");
+  document.getElementById("mem-bar")!.innerHTML =
+    `<div class="mem-bar">${bar}</div><div class="legend">${legend}</div>`;
+
+  const rows = [...s.processes]
+    .sort((a, b) => b.memory - a.memory)
+    .slice(0, 50)
+    .map(
+      (p) => `<tr>
+        <td>${esc(p.name)}</td>
+        <td class="num">${p.pid}</td>
+        <td class="num">${fmtBytes(p.memory)}</td>
+        <td class="num">${fmtBytes(p.virtual_memory)}</td>
+      </tr>`,
+    )
+    .join("");
+  document.querySelector("#mem-table tbody")!.innerHTML = rows;
+}
+
 function renderProcesses(s: Snapshot) {
   const filter = (document.getElementById("proc-filter") as HTMLInputElement).value.toLowerCase();
   let procs = s.processes;
@@ -206,14 +370,20 @@ function renderProcesses(s: Snapshot) {
       (p) => `<tr>
         <td>${esc(p.name)}</td>
         <td class="num">${p.pid}</td>
+        <td class="num">${p.threads}</td>
         <td class="num">${p.cpu.toFixed(1)}</td>
         <td class="num">${fmtBytes(p.memory)}</td>
+        <td class="num">${fmtBytes(p.virtual_memory)}</td>
         <td class="num">${fmtBytes(p.read_bps, "/s")}</td>
         <td class="num">${fmtBytes(p.write_bps, "/s")}</td>
       </tr>`,
     )
     .join("");
   document.querySelector("#proc-table tbody")!.innerHTML = rows;
+}
+
+function isListening(c: Connection): boolean {
+  return c.protocol === "UDP" || c.state.toUpperCase().includes("LISTEN");
 }
 
 function renderNetwork(s: Snapshot) {
@@ -224,7 +394,7 @@ function renderNetwork(s: Snapshot) {
   document.getElementById("nic-cards")!.innerHTML = nics;
 
   const filter = (document.getElementById("conn-filter") as HTMLInputElement).value.toLowerCase();
-  let conns = s.connections;
+  let conns = s.connections.filter((c) => !isListening(c));
   if (filter) {
     conns = conns.filter(
       (c) =>
@@ -247,6 +417,20 @@ function renderNetwork(s: Snapshot) {
     )
     .join("");
   document.querySelector("#conn-table tbody")!.innerHTML = rows;
+
+  const listenRows = s.connections
+    .filter(isListening)
+    .sort((a, b) => a.process.localeCompare(b.process))
+    .map(
+      (c) => `<tr>
+        <td>${esc(c.process)}</td>
+        <td class="num">${c.pid}</td>
+        <td>${c.protocol}</td>
+        <td>${esc(c.local)}</td>
+      </tr>`,
+    )
+    .join("");
+  document.querySelector("#listen-table tbody")!.innerHTML = listenRows;
 }
 
 function renderDisk(s: Snapshot) {
@@ -265,6 +449,22 @@ function renderDisk(s: Snapshot) {
       "",
       sparkline(history.write, Math.max(...history.write, 1024 * 512), "#ffb74d"),
     );
+
+  const storageRows = s.disks
+    .map((d) => {
+      const usedPct = d.total ? ((d.total - d.available) / d.total) * 100 : 0;
+      return `<tr>
+        <td>${esc(d.mount)} ${esc(d.name)}${d.removable ? " (extraíble)" : ""}</td>
+        <td>${esc(d.fs)}</td>
+        <td class="num">${usageBar(d.active_pct, "#81c784")}</td>
+        <td class="num">${d.queue.toFixed(2)}</td>
+        <td class="num">${fmtBytes(d.available)}</td>
+        <td class="num">${fmtBytes(d.total)}</td>
+        <td class="num">${usageBar(usedPct, "#ffb74d")}</td>
+      </tr>`;
+    })
+    .join("");
+  document.querySelector("#storage-table tbody")!.innerHTML = storageRows;
 
   const rows = [...s.processes]
     .filter((p) => p.read_bps > 0 || p.write_bps > 0)
@@ -313,6 +513,8 @@ function renderGpu(s: Snapshot) {
 function render(s: Snapshot) {
   renderTopbar(s);
   if (activeTab === "overview") renderOverview(s);
+  else if (activeTab === "cpu") renderCpu(s);
+  else if (activeTab === "memory") renderMemory(s);
   else if (activeTab === "processes") renderProcesses(s);
   else if (activeTab === "network") renderNetwork(s);
   else if (activeTab === "disk") renderDisk(s);
@@ -330,6 +532,7 @@ async function tick() {
     push(history.gpu, s.gpu?.utilization ?? 0);
     push(history.read, s.processes.reduce((a, p) => a + p.read_bps, 0));
     push(history.write, s.processes.reduce((a, p) => a + p.write_bps, 0));
+    push(history.faults, s.memory.hard_faults_ps);
     render(s);
   } catch (e) {
     console.error("snapshot error", e);
@@ -361,7 +564,7 @@ function setupUi() {
     });
   });
 
-  for (const id of ["proc-filter", "conn-filter"]) {
+  for (const id of ["proc-filter", "conn-filter", "svc-filter"]) {
     document.getElementById(id)!.addEventListener("input", () => {
       if (lastSnapshot) render(lastSnapshot);
     });

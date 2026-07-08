@@ -1,12 +1,15 @@
 mod cpufreq;
 mod gpu;
 mod net;
+mod pdh;
+mod services;
+mod threads;
 
 use serde::Serialize;
 use std::collections::HashMap;
 use std::sync::Mutex;
 use std::time::Instant;
-use sysinfo::{Networks, ProcessesToUpdate, System};
+use sysinfo::{Disks, Networks, ProcessesToUpdate, System};
 
 #[derive(Serialize)]
 pub struct CpuSnapshot {
@@ -24,6 +27,12 @@ pub struct MemorySnapshot {
     used: u64,
     swap_total: u64,
     swap_used: u64,
+    commit: u64,
+    commit_limit: u64,
+    standby: u64,
+    modified: u64,
+    free: u64,
+    hard_faults_ps: f64,
 }
 
 #[derive(Serialize)]
@@ -32,8 +41,22 @@ pub struct ProcessSnapshot {
     name: String,
     cpu: f32,
     memory: u64,
+    virtual_memory: u64,
+    threads: u32,
     read_bps: u64,
     write_bps: u64,
+}
+
+#[derive(Serialize)]
+pub struct DiskSnapshot {
+    name: String,
+    mount: String,
+    fs: String,
+    total: u64,
+    available: u64,
+    removable: bool,
+    active_pct: f64,
+    queue: f64,
 }
 
 #[derive(Serialize)]
@@ -50,6 +73,8 @@ pub struct Snapshot {
     processes: Vec<ProcessSnapshot>,
     nics: Vec<NicSnapshot>,
     connections: Vec<net::Connection>,
+    disks: Vec<DiskSnapshot>,
+    services: Vec<services::ServiceSnapshot>,
     gpu: Option<gpu::GpuSnapshot>,
 }
 
@@ -58,9 +83,16 @@ pub struct MonitorState(Mutex<Inner>);
 struct Inner {
     sys: System,
     networks: Networks,
+    disks: Disks,
     gpu: gpu::GpuMonitor,
     cpufreq: cpufreq::CpuFreq,
+    counters: pdh::SysCounters,
     last: Instant,
+}
+
+/// "C:\" -> "C:" (instancia PDH de LogicalDisk).
+fn disk_instance(mount: &str) -> String {
+    mount.trim_end_matches('\\').to_string()
 }
 
 impl MonitorState {
@@ -69,11 +101,19 @@ impl MonitorState {
         sys.refresh_cpu_all();
         sys.refresh_memory();
         sys.refresh_processes(ProcessesToUpdate::All, true);
+        let disks = Disks::new_with_refreshed_list();
+        let instances: Vec<String> = disks
+            .list()
+            .iter()
+            .map(|d| disk_instance(&d.mount_point().to_string_lossy()))
+            .collect();
         Self(Mutex::new(Inner {
             sys,
             networks: Networks::new_with_refreshed_list(),
+            disks,
             gpu: gpu::GpuMonitor::new(),
             cpufreq: cpufreq::CpuFreq::new(),
+            counters: pdh::SysCounters::new(&instances),
             last: Instant::now(),
         }))
     }
@@ -89,6 +129,9 @@ pub fn get_snapshot(state: tauri::State<MonitorState>) -> Snapshot {
     inner.sys.refresh_memory();
     inner.sys.refresh_processes(ProcessesToUpdate::All, true);
     inner.networks.refresh(true);
+    inner.disks.refresh(true);
+    inner.counters.collect();
+    let thread_map = threads::thread_counts();
 
     let cores = inner.sys.cpus().len().max(1);
     let names: HashMap<u32, String> = inner
@@ -114,11 +157,18 @@ pub fn get_snapshot(state: tauri::State<MonitorState>) -> Snapshot {
         cores,
     };
 
+    let mem = inner.counters.memory();
     let memory = MemorySnapshot {
         total: inner.sys.total_memory(),
         used: inner.sys.used_memory(),
         swap_total: inner.sys.total_swap(),
         swap_used: inner.sys.used_swap(),
+        commit: mem.committed,
+        commit_limit: mem.commit_limit,
+        standby: mem.standby,
+        modified: mem.modified,
+        free: mem.free_zero,
+        hard_faults_ps: mem.hard_faults_ps,
     };
 
     let mut processes: Vec<ProcessSnapshot> = inner
@@ -127,17 +177,40 @@ pub fn get_snapshot(state: tauri::State<MonitorState>) -> Snapshot {
         .values()
         .map(|p| {
             let du = p.disk_usage();
+            let pid = p.pid().as_u32();
             ProcessSnapshot {
-                pid: p.pid().as_u32(),
+                pid,
                 name: p.name().to_string_lossy().into_owned(),
                 cpu: p.cpu_usage() / cores as f32,
                 memory: p.memory(),
+                virtual_memory: p.virtual_memory(),
+                threads: thread_map.get(&pid).copied().unwrap_or(0),
                 read_bps: (du.read_bytes as f64 / elapsed) as u64,
                 write_bps: (du.written_bytes as f64 / elapsed) as u64,
             }
         })
         .collect();
     processes.sort_by(|a, b| b.cpu.total_cmp(&a.cpu));
+
+    let disks: Vec<DiskSnapshot> = inner
+        .disks
+        .list()
+        .iter()
+        .map(|d| {
+            let mount = d.mount_point().to_string_lossy().into_owned();
+            let (active_pct, queue) = inner.counters.disk(&disk_instance(&mount));
+            DiskSnapshot {
+                name: d.name().to_string_lossy().into_owned(),
+                mount,
+                fs: d.file_system().to_string_lossy().into_owned(),
+                total: d.total_space(),
+                available: d.available_space(),
+                removable: d.is_removable(),
+                active_pct,
+                queue,
+            }
+        })
+        .collect();
 
     let nics: Vec<NicSnapshot> = inner
         .networks
@@ -155,6 +228,8 @@ pub fn get_snapshot(state: tauri::State<MonitorState>) -> Snapshot {
         processes,
         nics,
         connections: net::collect(&names),
+        disks,
+        services: services::collect(),
         gpu: inner.gpu.snapshot(&names),
     }
 }
