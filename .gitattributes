@@ -1,0 +1,12 @@
+# Normaliza a LF en el repo, checkout según plataforma
+* text=auto eol=lf
+
+# Scripts de Windows: mantener CRLF
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# Binarios
+*.png binary
+*.ico binary
+*.icns binary
