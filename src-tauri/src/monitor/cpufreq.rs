@@ -1,14 +1,14 @@
 use windows::core::w;
 use windows::Win32::System::Performance::{
     PdhAddEnglishCounterW, PdhCollectQueryData, PdhGetFormattedCounterValue, PdhOpenQueryW,
-    PDH_FMT_COUNTERVALUE, PDH_FMT_DOUBLE,
+    PDH_FMT_COUNTERVALUE, PDH_FMT_DOUBLE, PDH_HCOUNTER, PDH_HQUERY,
 };
 
 /// Contador PDH "% Processor Performance" (100 = frecuencia base).
 /// Se usa la variante English para que funcione en Windows localizados.
 pub struct CpuFreq {
-    query: isize,
-    counter: isize,
+    query: PDH_HQUERY,
+    counter: PDH_HCOUNTER,
     ok: bool,
 }
 
@@ -19,14 +19,14 @@ unsafe impl Send for CpuFreq {}
 impl CpuFreq {
     pub fn new() -> Self {
         unsafe {
-            let mut query: isize = 0;
+            let mut query = PDH_HQUERY::default();
             if PdhOpenQueryW(None, 0, &mut query) != 0 {
-                return Self { query: 0, counter: 0, ok: false };
+                return Self { query, counter: PDH_HCOUNTER::default(), ok: false };
             }
-            let mut counter: isize = 0;
+            let mut counter = PDH_HCOUNTER::default();
             let path = w!("\\Processor Information(_Total)\\% Processor Performance");
             if PdhAddEnglishCounterW(query, path, 0, &mut counter) != 0 {
-                return Self { query, counter: 0, ok: false };
+                return Self { query, counter, ok: false };
             }
             // primera recogida: los contadores de tasa necesitan dos muestras
             PdhCollectQueryData(query);
