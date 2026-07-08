@@ -107,6 +107,24 @@
             <tbody></tbody>
           </table>
         </div>
+        <h2 class="section-title">Actividad de disco por archivo</h2>
+        <div id="file-etw-notice" class="notice" hidden>
+          Ejecuta ResmonX como administrador para ver la actividad de disco por archivo.
+        </div>
+        <div class="table-wrap short" id="file-act-wrap" hidden>
+          <table id="file-act-table">
+            <thead>
+              <tr>
+                <th>Proceso</th>
+                <th>PID</th>
+                <th>Archivo</th>
+                <th>Lectura/s</th>
+                <th>Escritura/s</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
         <h2 class="section-title">Procesos con actividad de disco</h2>
         <div class="table-wrap short">
           <table id="disk-table">
@@ -125,6 +143,24 @@
 
       <section id="view-network" class="view">
         <div class="cards" id="nic-cards"></div>
+        <h2 class="section-title">Procesos con actividad de red</h2>
+        <div id="net-etw-notice" class="notice" hidden>
+          Ejecuta ResmonX como administrador para ver la actividad de red por proceso.
+        </div>
+        <div class="table-wrap short" id="net-proc-wrap" hidden>
+          <table id="net-proc-table">
+            <thead>
+              <tr>
+                <th>Proceso</th>
+                <th>PID</th>
+                <th>Enviado/s</th>
+                <th>Recibido/s</th>
+                <th>Total/s</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
         <h2 class="section-title">Conexiones TCP</h2>
         <input id="conn-filter" class="filter" type="text" placeholder="Filtrar conexiones…" />
         <div class="table-wrap short">

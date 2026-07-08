@@ -307,3 +307,22 @@ td.num {
   border-radius: 3px;
   background: var(--accent);
 }
+
+.notice {
+  background: var(--bg-card);
+  border: 1px dashed var(--border);
+  border-radius: 10px;
+  padding: 14px 16px;
+  color: var(--text-dim);
+  font-size: 13px;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+td.path {
+  max-width: 420px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}

@@ -1,4 +1,5 @@
 mod cpufreq;
+mod etw;
 mod gpu;
 mod net;
 mod pdh;
@@ -48,6 +49,23 @@ pub struct ProcessSnapshot {
 }
 
 #[derive(Serialize)]
+pub struct NetProcSnapshot {
+    pid: u32,
+    name: String,
+    sent_bps: u64,
+    recv_bps: u64,
+}
+
+#[derive(Serialize)]
+pub struct FileActivitySnapshot {
+    pid: u32,
+    name: String,
+    file: String,
+    read_bps: u64,
+    write_bps: u64,
+}
+
+#[derive(Serialize)]
 pub struct DiskSnapshot {
     name: String,
     mount: String,
@@ -76,6 +94,9 @@ pub struct Snapshot {
     disks: Vec<DiskSnapshot>,
     services: Vec<services::ServiceSnapshot>,
     gpu: Option<gpu::GpuSnapshot>,
+    etw: bool,
+    net_procs: Vec<NetProcSnapshot>,
+    file_activity: Vec<FileActivitySnapshot>,
 }
 
 pub struct MonitorState(Mutex<Inner>);
@@ -87,6 +108,7 @@ struct Inner {
     gpu: gpu::GpuMonitor,
     cpufreq: cpufreq::CpuFreq,
     counters: pdh::SysCounters,
+    etw: etw::EtwMonitor,
     last: Instant,
 }
 
@@ -114,6 +136,7 @@ impl MonitorState {
             gpu: gpu::GpuMonitor::new(),
             cpufreq: cpufreq::CpuFreq::new(),
             counters: pdh::SysCounters::new(&instances),
+            etw: etw::EtwMonitor::new(),
             last: Instant::now(),
         }))
     }
@@ -222,6 +245,32 @@ pub fn get_snapshot(state: tauri::State<MonitorState>) -> Snapshot {
         })
         .collect();
 
+    let (etw_net, etw_files) = inner.etw.drain();
+    let mut net_procs: Vec<NetProcSnapshot> = etw_net
+        .into_iter()
+        .map(|a| NetProcSnapshot {
+            pid: a.pid,
+            name: names.get(&a.pid).cloned().unwrap_or_else(|| "?".into()),
+            sent_bps: (a.sent as f64 / elapsed) as u64,
+            recv_bps: (a.recv as f64 / elapsed) as u64,
+        })
+        .collect();
+    net_procs.sort_by_key(|p| std::cmp::Reverse(p.sent_bps + p.recv_bps));
+    net_procs.truncate(100);
+
+    let mut file_activity: Vec<FileActivitySnapshot> = etw_files
+        .into_iter()
+        .map(|a| FileActivitySnapshot {
+            pid: a.pid,
+            name: names.get(&a.pid).cloned().unwrap_or_else(|| "?".into()),
+            file: a.file,
+            read_bps: (a.read as f64 / elapsed) as u64,
+            write_bps: (a.write as f64 / elapsed) as u64,
+        })
+        .collect();
+    file_activity.sort_by_key(|f| std::cmp::Reverse(f.read_bps + f.write_bps));
+    file_activity.truncate(100);
+
     Snapshot {
         cpu,
         memory,
@@ -231,5 +280,8 @@ pub fn get_snapshot(state: tauri::State<MonitorState>) -> Snapshot {
         disks,
         services: services::collect(),
         gpu: inner.gpu.snapshot(&names),
+        etw: inner.etw.available(),
+        net_procs,
+        file_activity,
     }
 }

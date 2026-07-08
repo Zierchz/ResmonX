@@ -66,6 +66,21 @@ interface ServiceSnapshot {
   state: string;
 }
 
+interface NetProcSnapshot {
+  pid: number;
+  name: string;
+  sent_bps: number;
+  recv_bps: number;
+}
+
+interface FileActivitySnapshot {
+  pid: number;
+  name: string;
+  file: string;
+  read_bps: number;
+  write_bps: number;
+}
+
 interface GpuProcess {
   pid: number;
   name: string;
@@ -97,6 +112,9 @@ interface Snapshot {
   disks: DiskSnapshot[];
   services: ServiceSnapshot[];
   gpu: GpuSnapshot | null;
+  etw: boolean;
+  net_procs: NetProcSnapshot[];
+  file_activity: FileActivitySnapshot[];
 }
 
 const HISTORY_LEN = 120;
@@ -136,7 +154,11 @@ function fmtBytes(b: number, suffix = ""): string {
 }
 
 function esc(s: string): string {
-  return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  return s
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;");
 }
 
 function sparkline(values: number[], max: number, color: string): string {
@@ -386,12 +408,33 @@ function isListening(c: Connection): boolean {
   return c.protocol === "UDP" || c.state.toUpperCase().includes("LISTEN");
 }
 
+function toggleEtw(noticeId: string, wrapId: string, etw: boolean) {
+  (document.getElementById(noticeId) as HTMLElement).hidden = etw;
+  (document.getElementById(wrapId) as HTMLElement).hidden = !etw;
+}
+
 function renderNetwork(s: Snapshot) {
   const nics = s.nics
     .filter((n) => n.rx_bps > 0 || n.tx_bps > 0 || s.nics.length <= 3)
     .map((n) => card(esc(n.name), `↓ ${fmtBytes(n.rx_bps, "/s")}`, `↑ ${fmtBytes(n.tx_bps, "/s")}`, ""))
     .join("");
   document.getElementById("nic-cards")!.innerHTML = nics;
+
+  toggleEtw("net-etw-notice", "net-proc-wrap", s.etw);
+  if (s.etw) {
+    const netRows = s.net_procs
+      .map(
+        (p) => `<tr>
+          <td>${esc(p.name)}</td>
+          <td class="num">${p.pid}</td>
+          <td class="num">${fmtBytes(p.sent_bps, "/s")}</td>
+          <td class="num">${fmtBytes(p.recv_bps, "/s")}</td>
+          <td class="num">${fmtBytes(p.sent_bps + p.recv_bps, "/s")}</td>
+        </tr>`,
+      )
+      .join("");
+    document.querySelector("#net-proc-table tbody")!.innerHTML = netRows;
+  }
 
   const filter = (document.getElementById("conn-filter") as HTMLInputElement).value.toLowerCase();
   let conns = s.connections.filter((c) => !isListening(c));
@@ -465,6 +508,22 @@ function renderDisk(s: Snapshot) {
     })
     .join("");
   document.querySelector("#storage-table tbody")!.innerHTML = storageRows;
+
+  toggleEtw("file-etw-notice", "file-act-wrap", s.etw);
+  if (s.etw) {
+    const fileRows = s.file_activity
+      .map(
+        (f) => `<tr>
+          <td>${esc(f.name)}</td>
+          <td class="num">${f.pid}</td>
+          <td class="path" title="${esc(f.file)}">${esc(f.file)}</td>
+          <td class="num">${fmtBytes(f.read_bps, "/s")}</td>
+          <td class="num">${fmtBytes(f.write_bps, "/s")}</td>
+        </tr>`,
+      )
+      .join("");
+    document.querySelector("#file-act-table tbody")!.innerHTML = fileRows;
+  }
 
   const rows = [...s.processes]
     .filter((p) => p.read_bps > 0 || p.write_bps > 0)
