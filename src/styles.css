@@ -6,6 +6,21 @@
   --text: #dbe2ea;
   --text-dim: #8a97a5;
   --accent: #4fc3f7;
+
+  /* color por recurso (coincide con las sparklines) */
+  --cpu: #4fc3f7;
+  --mem: #ba68c8;
+  --net: #81c784;
+  --disk: #ffb74d;
+  --gpu: #e57373;
+
+  /* color por severidad: la lectura dice su propio estado */
+  --ok: #66bb6a;
+  --warn: #ffa726;
+  --crit: #ef5350;
+
+  --font-mono: "Cascadia Mono", "Consolas", ui-monospace, monospace;
+
   font-family: "Segoe UI", system-ui, sans-serif;
   font-size: 14px;
   color-scheme: dark;
@@ -44,13 +59,38 @@ body {
 
 .topbar-stats {
   display: flex;
-  gap: 16px;
+  gap: 18px;
 }
 
 .stat {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
-  color: var(--text-dim);
+  color: var(--text);
   font-size: 13px;
+}
+
+.stat::before {
+  content: "";
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+#top-cpu::before {
+  background: var(--cpu);
+}
+#top-freq::before {
+  background: var(--text-dim);
+}
+#top-mem::before {
+  background: var(--mem);
+}
+#top-gpu::before {
+  background: var(--gpu);
 }
 
 .tabs {
@@ -147,6 +187,7 @@ main {
 .card {
   background: var(--bg-card);
   border: 1px solid var(--border);
+  border-left: 3px solid var(--card-accent, var(--border));
   border-radius: 10px;
   padding: 14px 16px;
 }
@@ -160,9 +201,12 @@ main {
 }
 
 .card-value {
-  font-size: 22px;
+  font-family: var(--font-mono);
+  font-size: 23px;
   font-weight: 600;
   font-variant-numeric: tabular-nums;
+  letter-spacing: -0.01em;
+  color: var(--card-accent, var(--text));
   margin-bottom: 4px;
 }
 
@@ -235,12 +279,17 @@ tbody td {
   font-variant-numeric: tabular-nums;
 }
 
+tbody tr:nth-child(even) {
+  background: rgba(255, 255, 255, 0.018);
+}
+
 tbody tr:hover {
   background: var(--bg-hover);
 }
 
 td.num {
   text-align: right;
+  font-family: var(--font-mono);
 }
 
 .section-title {
@@ -289,6 +338,18 @@ td.num {
   height: 100%;
   border-radius: 3px;
   background: var(--accent);
+  transition: width 0.3s ease, background 0.3s ease;
+}
+
+/* severidad: la barra dice su propio nivel */
+.sev-ok {
+  background: var(--ok);
+}
+.sev-warn {
+  background: var(--warn);
+}
+.sev-crit {
+  background: var(--crit);
 }
 
 .panel {
@@ -348,6 +409,7 @@ td.num {
   height: 100%;
   border-radius: 3px;
   background: var(--accent);
+  transition: width 0.3s ease, background 0.3s ease;
 }
 
 .notice {
@@ -503,4 +565,38 @@ tbody tr.selected {
     opacity: 0;
     transform: translateY(8px);
   }
+}
+
+.badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  padding: 1px 8px;
+  border-radius: 10px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-dim);
+  background: var(--bg-hover);
+}
+
+.badge::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.badge-run {
+  color: var(--ok);
+  background: rgba(102, 187, 106, 0.12);
+}
+
+.badge-stop {
+  color: var(--text-dim);
+}
+
+.badge-other {
+  color: var(--warn);
+  background: rgba(255, 167, 38, 0.12);
 }

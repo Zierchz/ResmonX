@@ -181,8 +181,25 @@ function sparkline(values: number[], max: number, color: string): string {
   </svg>`;
 }
 
-function card(title: string, value: string, detail: string, spark: string): string {
-  return `<div class="card">
+// color por recurso (coincide con las variables CSS)
+const COLORS = {
+  cpu: "#4fc3f7",
+  mem: "#ba68c8",
+  net: "#81c784",
+  disk: "#ffb74d",
+  gpu: "#e57373",
+};
+
+// clase de severidad según porcentaje de uso
+function sevClass(pct: number): string {
+  if (pct >= 85) return "sev-crit";
+  if (pct >= 60) return "sev-warn";
+  return "sev-ok";
+}
+
+function card(title: string, value: string, detail: string, spark: string, accent = ""): string {
+  const style = accent ? ` style="--card-accent:${accent}"` : "";
+  return `<div class="card"${style}>
     <div class="card-title">${title}</div>
     <div class="card-value">${value}</div>
     <div class="card-detail">${detail}</div>
@@ -190,9 +207,14 @@ function card(title: string, value: string, detail: string, spark: string): stri
   </div>`;
 }
 
-function usageBar(pct: number, color: string): string {
+function usageBar(pct: number): string {
   const p = Math.max(0, Math.min(100, pct));
-  return `<span class="usage-bar"><span class="usage-fill" style="width:${p.toFixed(0)}%;background:${color}"></span></span>${p.toFixed(0)}%`;
+  return `<span class="usage-bar"><span class="usage-fill ${sevClass(p)}" style="width:${p.toFixed(0)}%"></span></span>${p.toFixed(0)}%`;
+}
+
+function badge(state: string): string {
+  const cls = state === "En ejecución" ? "badge-run" : state === "Detenido" ? "badge-stop" : "badge-other";
+  return `<span class="badge ${cls}">${esc(state)}</span>`;
 }
 
 function renderTopbar(s: Snapshot) {
@@ -210,7 +232,8 @@ function cpuCard(s: Snapshot): string {
     "CPU",
     `${s.cpu.usage.toFixed(1)}%`,
     `${esc(s.cpu.name)} · ${(s.cpu.freq_mhz / 1000).toFixed(2)} GHz efectivos · ${s.cpu.cores} núcleos`,
-    sparkline(history.cpu, 100, "#4fc3f7"),
+    sparkline(history.cpu, 100, COLORS.cpu),
+    COLORS.cpu,
   );
 }
 
@@ -219,7 +242,8 @@ function memCard(s: Snapshot): string {
     "Memoria",
     `${fmtBytes(s.memory.used)} / ${fmtBytes(s.memory.total)}`,
     `${((s.memory.used / s.memory.total) * 100).toFixed(1)}% · swap ${fmtBytes(s.memory.swap_used)}`,
-    sparkline(history.mem, 100, "#ba68c8"),
+    sparkline(history.mem, 100, COLORS.mem),
+    COLORS.mem,
   );
 }
 
@@ -230,7 +254,8 @@ function netCard(s: Snapshot): string {
     "Red",
     `↓ ${fmtBytes(rx, "/s")} · ↑ ${fmtBytes(tx, "/s")}`,
     `${s.connections.length} conexiones activas`,
-    sparkline(history.rx, Math.max(...history.rx, 1024 * 128), "#81c784"),
+    sparkline(history.rx, Math.max(...history.rx, 1024 * 128), COLORS.net),
+    COLORS.net,
   );
 }
 
@@ -241,7 +266,8 @@ function diskCard(s: Snapshot): string {
     "Disco",
     `R ${fmtBytes(read, "/s")} · W ${fmtBytes(write, "/s")}`,
     "I/O agregado por procesos",
-    sparkline(history.write, Math.max(...history.write, 1024 * 512), "#ffb74d"),
+    sparkline(history.write, Math.max(...history.write, 1024 * 512), COLORS.disk),
+    COLORS.disk,
   );
 }
 
@@ -251,7 +277,8 @@ function gpuCard(s: Snapshot): string {
     "GPU",
     `${s.gpu.utilization}% · ${s.gpu.clock_core} MHz`,
     `${esc(s.gpu.name)} · ${fmtBytes(s.gpu.mem_used)} VRAM · ${s.gpu.temp}°C · ${s.gpu.power_w.toFixed(1)} W · ${esc(s.gpu.pstate)}`,
-    sparkline(history.gpu, 100, "#e57373"),
+    sparkline(history.gpu, 100, COLORS.gpu),
+    COLORS.gpu,
   );
 }
 
@@ -280,7 +307,7 @@ function serviceRows(s: Snapshot): string {
         <td>${esc(v.name)}</td>
         <td>${esc(v.display)}</td>
         <td class="num">${v.pid || ""}</td>
-        <td>${esc(v.state)}</td>
+        <td>${badge(v.state)}</td>
       </tr>`,
     )
     .join("");
@@ -310,14 +337,21 @@ function renderCpu(s: Snapshot) {
       `${(s.cpu.freq_mhz / 1000).toFixed(2)} GHz`,
       `base ${(s.cpu.base_mhz / 1000).toFixed(2)} GHz`,
       "",
+      COLORS.cpu,
     ) +
-    card("Procesos", `${s.processes.length}`, `${totalThreads} hilos · ${s.cpu.cores} núcleos lógicos`, "");
+    card(
+      "Procesos",
+      `${s.processes.length}`,
+      `${totalThreads} hilos · ${s.cpu.cores} núcleos lógicos`,
+      "",
+      COLORS.cpu,
+    );
 
   document.getElementById("core-grid")!.innerHTML = s.cpu.per_core
     .map(
       (u, i) => `<div class="core-cell">
         <div class="core-label"><span>N${i}</span><span>${u.toFixed(0)}%</span></div>
-        <div class="core-track"><div class="core-fill" style="width:${Math.min(u, 100).toFixed(0)}%"></div></div>
+        <div class="core-track"><div class="core-fill ${sevClass(u)}" style="width:${Math.min(u, 100).toFixed(0)}%"></div></div>
       </div>`,
     )
     .join("");
@@ -357,7 +391,7 @@ function renderCpu(s: Snapshot) {
         <td>${esc(v.name)}</td>
         <td>${esc(v.display)}</td>
         <td class="num">${v.pid || ""}</td>
-        <td>${esc(v.state)}</td>
+        <td>${badge(v.state)}</td>
         <td class="num">${v.pid ? (cpuByPid.get(v.pid) ?? 0).toFixed(1) : ""}</td>
       </tr>`,
     )
@@ -380,13 +414,15 @@ function renderMemory(s: Snapshot) {
       `${fmtBytes(m.commit)}`,
       m.commit_limit ? `límite ${fmtBytes(m.commit_limit)} · ${((m.commit / m.commit_limit) * 100).toFixed(0)}%` : "",
       "",
+      COLORS.mem,
     ) +
-    card("En espera (caché)", fmtBytes(standby), `modificada ${fmtBytes(modified)}`, "") +
+    card("En espera (caché)", fmtBytes(standby), `modificada ${fmtBytes(modified)}`, "", COLORS.mem) +
     card(
       "Fallos duros/s",
       m.hard_faults_ps.toFixed(0),
       "páginas leídas de disco por segundo",
-      sparkline(history.faults, Math.max(...history.faults, 10), "#ffb74d"),
+      sparkline(history.faults, Math.max(...history.faults, 10), COLORS.mem),
+      COLORS.mem,
     );
 
   const segs = [
@@ -468,13 +504,14 @@ function renderNetwork(s: Snapshot) {
       "Subida",
       fmtBytes(tx, "/s"),
       `${activeNics} interfaces activas`,
-      sparkline(history.tx, Math.max(...history.tx, 1024 * 128), "#64b5f6"),
+      sparkline(history.tx, Math.max(...history.tx, 1024 * 128), COLORS.net),
+      COLORS.net,
     ) +
-    card("Conexiones", `${s.connections.length}`, "TCP/UDP activas y en escucha", "");
+    card("Conexiones", `${s.connections.length}`, "TCP/UDP activas y en escucha", "", COLORS.net);
 
   const nics = s.nics
     .filter((n) => n.rx_bps > 0 || n.tx_bps > 0 || s.nics.length <= 3)
-    .map((n) => card(esc(n.name), `↓ ${fmtBytes(n.rx_bps, "/s")}`, `↑ ${fmtBytes(n.tx_bps, "/s")}`, ""))
+    .map((n) => card(esc(n.name), `↓ ${fmtBytes(n.rx_bps, "/s")}`, `↑ ${fmtBytes(n.tx_bps, "/s")}`, "", COLORS.net))
     .join("");
   document.getElementById("nic-cards")!.innerHTML = nics;
 
@@ -544,15 +581,17 @@ function renderDisk(s: Snapshot) {
       "Lectura total",
       fmtBytes(read, "/s"),
       "",
-      sparkline(history.read, Math.max(...history.read, 1024 * 512), "#4fc3f7"),
+      sparkline(history.read, Math.max(...history.read, 1024 * 512), COLORS.disk),
+      COLORS.disk,
     ) +
     card(
       "Escritura total",
       fmtBytes(write, "/s"),
       "",
-      sparkline(history.write, Math.max(...history.write, 1024 * 512), "#ffb74d"),
+      sparkline(history.write, Math.max(...history.write, 1024 * 512), COLORS.disk),
+      COLORS.disk,
     ) +
-    card("Unidad más activa", `${busiest.toFixed(0)}%`, `${s.disks.length} unidades`, "");
+    card("Unidad más activa", `${busiest.toFixed(0)}%`, `${s.disks.length} unidades`, "", COLORS.disk);
 
   const storageRows = s.disks
     .map((d) => {
@@ -560,11 +599,11 @@ function renderDisk(s: Snapshot) {
       return `<tr>
         <td>${esc(d.mount)} ${esc(d.name)}${d.removable ? " (extraíble)" : ""}</td>
         <td>${esc(d.fs)}</td>
-        <td class="num">${usageBar(d.active_pct, "#81c784")}</td>
+        <td class="num">${usageBar(d.active_pct)}</td>
         <td class="num">${d.queue.toFixed(2)}</td>
         <td class="num">${fmtBytes(d.available)}</td>
         <td class="num">${fmtBytes(d.total)}</td>
-        <td class="num">${usageBar(usedPct, "#ffb74d")}</td>
+        <td class="num">${usageBar(usedPct)}</td>
       </tr>`;
     })
     .join("");
@@ -611,11 +650,11 @@ function renderGpu(s: Snapshot) {
   }
   const g = s.gpu;
   el.innerHTML =
-    card("Uso", `${g.utilization}%`, esc(g.name), sparkline(history.gpu, 100, "#e57373")) +
-    card("Reloj núcleo", `${g.clock_core} MHz`, `máx ${g.clock_core_max} MHz · estado ${esc(g.pstate)}`, "") +
-    card("Reloj memoria", `${g.clock_mem} MHz`, `máx ${g.clock_mem_max} MHz`, "") +
-    card("VRAM", `${fmtBytes(g.mem_used)} / ${fmtBytes(g.mem_total)}`, "", "") +
-    card("Temperatura", `${g.temp}°C`, `${g.power_w.toFixed(1)} W`, "");
+    card("Uso", `${g.utilization}%`, esc(g.name), sparkline(history.gpu, 100, COLORS.gpu), COLORS.gpu) +
+    card("Reloj núcleo", `${g.clock_core} MHz`, `máx ${g.clock_core_max} MHz · estado ${esc(g.pstate)}`, "", COLORS.gpu) +
+    card("Reloj memoria", `${g.clock_mem} MHz`, `máx ${g.clock_mem_max} MHz`, "", COLORS.gpu) +
+    card("VRAM", `${fmtBytes(g.mem_used)} / ${fmtBytes(g.mem_total)}`, "", "", COLORS.gpu) +
+    card("Temperatura", `${g.temp}°C`, `${g.power_w.toFixed(1)} W`, "", COLORS.gpu);
 
   const rows = g.processes
     .map(
