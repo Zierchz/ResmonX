@@ -834,17 +834,38 @@ async function tick() {
   }
 }
 
+// color de cada carpeta (Resumen y Procesos usan tonos neutros propios)
+const FOLDER: Record<string, string> = {
+  overview: "#b0bec5",
+  cpu: COLORS.cpu,
+  memory: COLORS.mem,
+  disk: COLORS.disk,
+  network: COLORS.net,
+  processes: "#9fa8da",
+  gpu: COLORS.gpu,
+};
+
+function setFolderAccent(tab: string) {
+  const body = document.querySelector<HTMLElement>(".folder-body")!;
+  body.style.setProperty("--folder-accent", FOLDER[tab] ?? "var(--accent)");
+}
+
 function setupUi() {
-  document.querySelectorAll<HTMLButtonElement>(".tab").forEach((btn) => {
+  document.querySelectorAll<HTMLButtonElement>(".folder-tab").forEach((btn) => {
+    const tab = btn.dataset.tab!;
+    // cada lengüeta lleva el color de su recurso
+    btn.style.setProperty("--folder", FOLDER[tab] ?? "var(--text-dim)");
     btn.addEventListener("click", () => {
-      activeTab = btn.dataset.tab!;
-      document.querySelectorAll(".tab").forEach((b) => b.classList.toggle("active", b === btn));
+      activeTab = tab;
+      document.querySelectorAll(".folder-tab").forEach((b) => b.classList.toggle("active", b === btn));
       document
         .querySelectorAll(".view")
         .forEach((v) => v.classList.toggle("active", v.id === `view-${activeTab}`));
+      setFolderAccent(activeTab);
       if (lastSnapshot) render(lastSnapshot);
     });
   });
+  setFolderAccent(activeTab);
 
   document.querySelectorAll<HTMLTableCellElement>("#proc-table th").forEach((th) => {
     th.addEventListener("click", () => {

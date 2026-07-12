@@ -16,18 +16,19 @@
         <span id="top-mem" class="stat">RAM —</span>
         <span id="top-gpu" class="stat">GPU —</span>
       </div>
-      <nav class="tabs">
-        <button class="tab active" data-tab="overview">Resumen</button>
-        <button class="tab" data-tab="cpu">CPU</button>
-        <button class="tab" data-tab="memory">Memoria</button>
-        <button class="tab" data-tab="disk">Disco</button>
-        <button class="tab" data-tab="network">Red</button>
-        <button class="tab" data-tab="processes">Procesos</button>
-        <button class="tab" data-tab="gpu">GPU</button>
-      </nav>
     </header>
 
-    <main>
+    <nav class="folders">
+      <button class="folder-tab active" data-tab="overview">Resumen</button>
+      <button class="folder-tab" data-tab="cpu">CPU</button>
+      <button class="folder-tab" data-tab="memory">Memoria</button>
+      <button class="folder-tab" data-tab="disk">Disco</button>
+      <button class="folder-tab" data-tab="network">Red</button>
+      <button class="folder-tab" data-tab="processes">Procesos</button>
+      <button class="folder-tab" data-tab="gpu">GPU</button>
+    </nav>
+
+    <main class="folder-body">
       <section id="view-overview" class="view active">
         <div class="split">
           <aside class="split-aside">

@@ -58,6 +58,7 @@ body {
 }
 
 .topbar-stats {
+  margin-left: auto;
   display: flex;
   gap: 18px;
 }
@@ -93,38 +94,75 @@ body {
   background: var(--gpu);
 }
 
-.tabs {
-  margin-left: auto;
+/* Archivador: fila de lengüetas de carpeta colgante */
+.folders {
   display: flex;
-  gap: 4px;
+  gap: 3px;
+  padding: 10px 20px 0;
+  align-items: flex-end;
+  flex-shrink: 0;
+  overflow-x: auto;
+  background: var(--bg);
 }
 
-.tab {
-  background: none;
-  border: none;
+.folder-tab {
+  position: relative;
+  background: var(--bg-card);
   color: var(--text-dim);
-  padding: 6px 14px;
-  border-radius: 6px;
-  cursor: pointer;
+  border: 1px solid var(--border);
+  border-bottom: none;
+  border-top: 2px solid color-mix(in srgb, var(--folder, var(--text-dim)) 40%, transparent);
+  border-radius: 10px 10px 0 0;
+  padding: 7px 15px 8px;
   font-size: 13px;
   font-family: inherit;
+  cursor: pointer;
+  white-space: nowrap;
+  margin-bottom: -1px;
+  transition: background 0.15s, color 0.15s;
 }
 
-.tab:hover {
+.folder-tab:hover {
   background: var(--bg-hover);
   color: var(--text);
 }
 
-.tab.active {
-  background: var(--bg-hover);
-  color: var(--accent);
+.folder-tab.active {
+  background: var(--bg-card);
+  color: var(--text);
   font-weight: 600;
+  border-top-width: 3px;
+  border-top-color: var(--folder, var(--accent));
+  padding-top: 9px;
+  z-index: 2;
 }
 
-main {
+.folder-body {
   flex: 1;
   overflow-y: auto;
-  padding: 16px 20px;
+  margin: 0 20px 16px;
+  padding: 16px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-top: 2px solid var(--folder-accent, var(--accent));
+  border-radius: 0 12px 12px 12px;
+}
+
+@keyframes folder-open {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+}
+
+.view.active {
+  animation: folder-open 0.22s ease-out;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .view.active {
+    animation: none;
+  }
 }
 
 .view {
