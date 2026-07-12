@@ -308,12 +308,27 @@ thead th {
   padding: 9px 14px;
   font-weight: 600;
   color: var(--text-dim);
-  cursor: pointer;
   user-select: none;
   white-space: nowrap;
 }
 
-thead th:hover {
+thead th[data-sort] {
+  cursor: pointer;
+}
+
+thead th[data-sort]:hover {
+  color: var(--text);
+}
+
+thead th.sort-asc::after {
+  content: " ▲";
+  font-size: 9px;
+  color: var(--accent);
+}
+
+thead th.sort-desc::after {
+  content: " ▼";
+  font-size: 9px;
   color: var(--accent);
 }
 

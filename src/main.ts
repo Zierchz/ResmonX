@@ -135,9 +135,35 @@ const history = {
 };
 
 let activeTab = "overview";
-let procSortKey: keyof ProcessSnapshot = "cpu";
-let procSortAsc = false;
 let lastSnapshot: Snapshot | null = null;
+
+// estado de ordenamiento por tabla (id -> columna + dirección)
+const sortState = new Map<string, { key: string; asc: boolean }>();
+
+// ordena filas (objetos) por la columna activa de la tabla; string vs número
+function sortRows<T>(tableId: string, rows: T[], def: { key: string; asc: boolean }): T[] {
+  if (!sortState.has(tableId)) sortState.set(tableId, def);
+  const { key, asc } = sortState.get(tableId)!;
+  return [...rows].sort((a, b) => {
+    const va = (a as Record<string, unknown>)[key];
+    const vb = (b as Record<string, unknown>)[key];
+    const cmp =
+      typeof va === "string" || typeof vb === "string"
+        ? String(va ?? "").localeCompare(String(vb ?? ""))
+        : (va as number) - (vb as number);
+    return asc ? cmp : -cmp;
+  });
+}
+
+// marca la flecha ▲/▼ en el encabezado activo de cada tabla
+function refreshSortIndicators() {
+  document.querySelectorAll<HTMLElement>("th[data-sort]").forEach((th) => {
+    const st = sortState.get(th.closest("table")?.id ?? "");
+    const active = !!st && st.key === th.dataset.sort;
+    th.classList.toggle("sort-asc", active && st!.asc);
+    th.classList.toggle("sort-desc", active && !st!.asc);
+  });
+}
 
 function push(arr: number[], v: number) {
   arr.push(v);
@@ -349,12 +375,7 @@ function procRow(p: ProcessSnapshot, netByPid: Map<number, number>, etw: boolean
 }
 
 function serviceRows(s: Snapshot): string {
-  return [...s.services]
-    .sort((a, b) => {
-      const ra = a.state === "En ejecución" ? 0 : 1;
-      const rb = b.state === "En ejecución" ? 0 : 1;
-      return ra - rb || a.name.localeCompare(b.name);
-    })
+  return sortRows("ov-svc-table", s.services, { key: "name", asc: true })
     .map(
       (v) => `<tr>
         <td>${esc(v.name)}</td>
@@ -372,11 +393,16 @@ function renderOverview(s: Snapshot) {
   document.getElementById("overview-cards")!.innerHTML = cards.join("");
 
   const netByPid = new Map(s.net_procs.map((p) => [p.pid, p.sent_bps + p.recv_bps]));
-  const top = s.processes.slice(0, 60);
+  const enriched = s.processes.map((p) => ({
+    ...p,
+    io: p.read_bps + p.write_bps,
+    net: netByPid.get(p.pid) ?? 0,
+  }));
+  const top = sortRows("ov-proc-table", enriched, { key: "cpu", asc: false }).slice(0, 60);
   const max: ColMax = {
     mem: Math.max(1, ...top.map((p) => p.memory)),
-    disk: Math.max(1, ...top.map((p) => p.read_bps + p.write_bps)),
-    net: Math.max(1, ...top.map((p) => netByPid.get(p.pid) ?? 0)),
+    disk: Math.max(1, ...top.map((p) => p.io)),
+    net: Math.max(1, ...top.map((p) => p.net)),
   };
   const procRows = top.map((p) => procRow(p, netByPid, s.etw, max)).join("");
   document.querySelector("#ov-proc-table tbody")!.innerHTML = procRows;
@@ -412,11 +438,11 @@ function renderCpu(s: Snapshot) {
     )
     .join("");
 
-  const rows = s.processes
+  const rows = sortRows("cpu-proc-table", s.processes, { key: "cpu", asc: false })
     .slice(0, 15)
     .map(
-      (p) => `<tr>
-        <td>${esc(p.name)}</td>
+      (p) => `<tr data-pid="${p.pid}" data-name="${esc(p.name)}" data-exe="${esc(p.exe)}">
+        <td class="pname">${procIcon(p.exe)}${esc(p.name)}</td>
         <td class="num">${p.pid}</td>
         <td class="num">${p.threads}</td>
         <td class="num">${p.cpu.toFixed(1)}</td>
@@ -436,19 +462,15 @@ function renderCpu(s: Snapshot) {
         String(v.pid) === filter,
     );
   }
-  const svcRows = [...services]
-    .sort((a, b) => {
-      const ra = a.state === "En ejecución" ? 0 : 1;
-      const rb = b.state === "En ejecución" ? 0 : 1;
-      return ra - rb || a.name.localeCompare(b.name);
-    })
+  const svcEnriched = services.map((v) => ({ ...v, cpu: v.pid ? (cpuByPid.get(v.pid) ?? 0) : 0 }));
+  const svcRows = sortRows("svc-table", svcEnriched, { key: "name", asc: true })
     .map(
       (v) => `<tr>
         <td>${esc(v.name)}</td>
         <td>${esc(v.display)}</td>
         <td class="num">${v.pid || ""}</td>
         <td>${badge(v.state)}</td>
-        <td class="num">${v.pid ? (cpuByPid.get(v.pid) ?? 0).toFixed(1) : ""}</td>
+        <td class="num">${v.pid ? v.cpu.toFixed(1) : ""}</td>
       </tr>`,
     )
     .join("");
@@ -498,12 +520,11 @@ function renderMemory(s: Snapshot) {
   document.getElementById("mem-bar")!.innerHTML =
     `<div class="mem-bar">${bar}</div><div class="legend">${legend}</div>`;
 
-  const rows = [...s.processes]
-    .sort((a, b) => b.memory - a.memory)
+  const rows = sortRows("mem-table", s.processes, { key: "memory", asc: false })
     .slice(0, 50)
     .map(
-      (p) => `<tr>
-        <td>${esc(p.name)}</td>
+      (p) => `<tr data-pid="${p.pid}" data-name="${esc(p.name)}" data-exe="${esc(p.exe)}">
+        <td class="pname">${procIcon(p.exe)}${esc(p.name)}</td>
         <td class="num">${p.pid}</td>
         <td class="num">${fmtBytes(p.memory)}</td>
         <td class="num">${fmtBytes(p.virtual_memory)}</td>
@@ -519,12 +540,7 @@ function renderProcesses(s: Snapshot) {
   if (filter) {
     procs = procs.filter((p) => p.name.toLowerCase().includes(filter) || String(p.pid) === filter);
   }
-  procs = [...procs].sort((a, b) => {
-    const va = a[procSortKey];
-    const vb = b[procSortKey];
-    const cmp = typeof va === "string" ? va.localeCompare(vb as string) : (va as number) - (vb as number);
-    return procSortAsc ? cmp : -cmp;
-  });
+  procs = sortRows("proc-table", procs, { key: "cpu", asc: false });
   const maxMem = Math.max(1, ...procs.map((p) => p.memory));
   const maxRead = Math.max(1, ...procs.map((p) => p.read_bps));
   const maxWrite = Math.max(1, ...procs.map((p) => p.write_bps));
@@ -576,14 +592,15 @@ function renderNetwork(s: Snapshot) {
 
   toggleEtw("net-etw-notice", "net-proc-wrap", s.etw);
   if (s.etw) {
-    const netRows = s.net_procs
+    const netEnriched = s.net_procs.map((p) => ({ ...p, total: p.sent_bps + p.recv_bps }));
+    const netRows = sortRows("net-proc-table", netEnriched, { key: "total", asc: false })
       .map(
-        (p) => `<tr>
+        (p) => `<tr data-pid="${p.pid}" data-name="${esc(p.name)}" data-exe="">
           <td>${esc(p.name)}</td>
           <td class="num">${p.pid}</td>
           <td class="num">${fmtBytes(p.sent_bps, "/s")}</td>
           <td class="num">${fmtBytes(p.recv_bps, "/s")}</td>
-          <td class="num">${fmtBytes(p.sent_bps + p.recv_bps, "/s")}</td>
+          <td class="num">${fmtBytes(p.total, "/s")}</td>
         </tr>`,
       )
       .join("");
@@ -601,7 +618,7 @@ function renderNetwork(s: Snapshot) {
         String(c.pid) === filter,
     );
   }
-  const rows = conns
+  const rows = sortRows("conn-table", conns, { key: "process", asc: true })
     .map(
       (c) => `<tr>
         <td>${esc(c.process)}</td>
@@ -615,9 +632,10 @@ function renderNetwork(s: Snapshot) {
     .join("");
   document.querySelector("#conn-table tbody")!.innerHTML = rows;
 
-  const listenRows = s.connections
-    .filter(isListening)
-    .sort((a, b) => a.process.localeCompare(b.process))
+  const listenRows = sortRows("listen-table", s.connections.filter(isListening), {
+    key: "process",
+    asc: true,
+  })
     .map(
       (c) => `<tr>
         <td>${esc(c.process)}</td>
@@ -652,27 +670,31 @@ function renderDisk(s: Snapshot) {
     ) +
     card("Unidad más activa", `${busiest.toFixed(0)}%`, `${s.disks.length} unidades`, "", COLORS.disk);
 
-  const storageRows = s.disks
-    .map((d) => {
-      const usedPct = d.total ? ((d.total - d.available) / d.total) * 100 : 0;
-      return `<tr>
+  const disksEnriched = s.disks.map((d) => ({
+    ...d,
+    usedPct: d.total ? ((d.total - d.available) / d.total) * 100 : 0,
+  }));
+  const storageRows = sortRows("storage-table", disksEnriched, { key: "mount", asc: true })
+    .map(
+      (d) => `<tr>
         <td>${esc(d.mount)} ${esc(d.name)}${d.removable ? " (extraíble)" : ""}</td>
         <td>${esc(d.fs)}</td>
         <td class="num">${usageBar(d.active_pct)}</td>
         <td class="num">${d.queue.toFixed(2)}</td>
         <td class="num">${fmtBytes(d.available)}</td>
         <td class="num">${fmtBytes(d.total)}</td>
-        <td class="num">${usageBar(usedPct)}</td>
-      </tr>`;
-    })
+        <td class="num">${usageBar(d.usedPct)}</td>
+      </tr>`,
+    )
     .join("");
   document.querySelector("#storage-table tbody")!.innerHTML = storageRows;
 
   toggleEtw("file-etw-notice", "file-act-wrap", s.etw);
   if (s.etw) {
-    const fileRows = s.file_activity
+    const fileEnriched = s.file_activity.map((f) => ({ ...f, io: f.read_bps + f.write_bps }));
+    const fileRows = sortRows("file-act-table", fileEnriched, { key: "io", asc: false })
       .map(
-        (f) => `<tr>
+        (f) => `<tr data-pid="${f.pid}" data-name="${esc(f.name)}" data-exe="">
           <td>${esc(f.name)}</td>
           <td class="num">${f.pid}</td>
           <td class="path" title="${esc(f.file)}">${esc(f.file)}</td>
@@ -684,13 +706,14 @@ function renderDisk(s: Snapshot) {
     document.querySelector("#file-act-table tbody")!.innerHTML = fileRows;
   }
 
-  const rows = [...s.processes]
+  const ioProcs = s.processes
     .filter((p) => p.read_bps > 0 || p.write_bps > 0)
-    .sort((a, b) => b.read_bps + b.write_bps - (a.read_bps + a.write_bps))
+    .map((p) => ({ ...p, io: p.read_bps + p.write_bps }));
+  const rows = sortRows("disk-table", ioProcs, { key: "io", asc: false })
     .slice(0, 50)
     .map(
-      (p) => `<tr>
-        <td>${esc(p.name)}</td>
+      (p) => `<tr data-pid="${p.pid}" data-name="${esc(p.name)}" data-exe="${esc(p.exe)}">
+        <td class="pname">${procIcon(p.exe)}${esc(p.name)}</td>
         <td class="num">${p.pid}</td>
         <td class="num">${fmtBytes(p.read_bps, "/s")}</td>
         <td class="num">${fmtBytes(p.write_bps, "/s")}</td>
@@ -715,9 +738,9 @@ function renderGpu(s: Snapshot) {
     card("VRAM", `${fmtBytes(g.mem_used)} / ${fmtBytes(g.mem_total)}`, "", "", COLORS.gpu) +
     card("Temperatura", `${g.temp}°C`, `${g.power_w.toFixed(1)} W`, "", COLORS.gpu);
 
-  const rows = g.processes
+  const rows = sortRows("gpu-table", g.processes, { key: "vram", asc: false })
     .map(
-      (p) => `<tr>
+      (p) => `<tr data-pid="${p.pid}" data-name="${esc(p.name)}" data-exe="">
         <td>${esc(p.name)}</td>
         <td class="num">${p.pid}</td>
         <td>${esc(p.kind)}</td>
@@ -839,12 +862,19 @@ function openCtxMenu(x: number, y: number, t: CtxTarget) {
 }
 
 function setupContextMenu() {
-  // funciona en cualquier tabla con filas data-pid (Resumen y Procesos)
   document.addEventListener("contextmenu", (ev) => {
     const e = ev as MouseEvent;
-    const row = (e.target as HTMLElement).closest("tr[data-pid]") as HTMLElement | null;
-    if (!row) return;
+    const target = e.target as HTMLElement;
+    // permitir el menú nativo solo en campos de texto (copiar/pegar)
+    if (target.closest("input, textarea")) return;
+    // suprimir el menú nativo del WebView en el resto de la app
     e.preventDefault();
+    // el menú personalizado solo en filas de proceso
+    const row = target.closest("tr[data-pid]") as HTMLElement | null;
+    if (!row) {
+      closeCtxMenu();
+      return;
+    }
     document.querySelectorAll("tr.selected").forEach((r) => r.classList.remove("selected"));
     row.classList.add("selected");
     openCtxMenu(e.clientX, e.clientY, {
@@ -874,6 +904,7 @@ function render(s: Snapshot) {
   else if (activeTab === "disk") renderDisk(s);
   else if (activeTab === "gpu") renderGpu(s);
   hydrateIcons();
+  refreshSortIndicators();
 }
 
 async function tick() {
@@ -919,17 +950,21 @@ function setupUi() {
     });
   });
 
-  document.querySelectorAll<HTMLTableCellElement>("#proc-table th").forEach((th) => {
-    th.addEventListener("click", () => {
-      const key = th.dataset.sort as keyof ProcessSnapshot;
-      if (procSortKey === key) {
-        procSortAsc = !procSortAsc;
-      } else {
-        procSortKey = key;
-        procSortAsc = key === "name";
-      }
-      if (lastSnapshot) renderProcesses(lastSnapshot);
-    });
+  // ordenamiento genérico: click en cualquier encabezado con data-sort
+  document.addEventListener("click", (ev) => {
+    const th = (ev.target as HTMLElement).closest("th[data-sort]") as HTMLElement | null;
+    if (!th) return;
+    const id = th.closest("table")?.id;
+    if (!id) return;
+    const key = th.dataset.sort!;
+    const cur = sortState.get(id);
+    if (cur && cur.key === key) {
+      sortState.set(id, { key, asc: !cur.asc });
+    } else {
+      // texto arranca ascendente; números, descendente
+      sortState.set(id, { key, asc: th.dataset.type === "text" });
+    }
+    if (lastSnapshot) render(lastSnapshot);
   });
 
   for (const id of ["proc-filter", "conn-filter", "svc-filter"]) {

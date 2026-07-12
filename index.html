@@ -64,13 +64,13 @@
               <table id="ov-proc-table">
                 <thead>
                   <tr>
-                    <th>Proceso</th>
-                    <th>PID</th>
-                    <th>CPU %</th>
-                    <th>RAM</th>
-                    <th>Disco/s</th>
-                    <th>Red/s</th>
-                    <th>Hilos</th>
+                    <th data-sort="name" data-type="text">Proceso</th>
+                    <th data-sort="pid">PID</th>
+                    <th data-sort="cpu">CPU %</th>
+                    <th data-sort="memory">RAM</th>
+                    <th data-sort="io">Disco/s</th>
+                    <th data-sort="net">Red/s</th>
+                    <th data-sort="threads">Hilos</th>
                   </tr>
                 </thead>
                 <tbody></tbody>
@@ -81,10 +81,10 @@
               <table id="ov-svc-table">
                 <thead>
                   <tr>
-                    <th>Servicio</th>
-                    <th>Descripción</th>
-                    <th>PID</th>
-                    <th>Estado</th>
+                    <th data-sort="name" data-type="text">Servicio</th>
+                    <th data-sort="display" data-type="text">Descripción</th>
+                    <th data-sort="pid">PID</th>
+                    <th data-sort="state" data-type="text">Estado</th>
                   </tr>
                 </thead>
                 <tbody></tbody>
@@ -107,10 +107,10 @@
               <table id="cpu-proc-table">
                 <thead>
                   <tr>
-                    <th>Proceso</th>
-                    <th>PID</th>
-                    <th>Hilos</th>
-                    <th>CPU %</th>
+                    <th data-sort="name" data-type="text">Proceso</th>
+                    <th data-sort="pid">PID</th>
+                    <th data-sort="threads">Hilos</th>
+                    <th data-sort="cpu">CPU %</th>
                   </tr>
                 </thead>
                 <tbody></tbody>
@@ -122,11 +122,11 @@
               <table id="svc-table">
                 <thead>
                   <tr>
-                    <th>Servicio</th>
-                    <th>Descripción</th>
-                    <th>PID</th>
-                    <th>Estado</th>
-                    <th>CPU %</th>
+                    <th data-sort="name" data-type="text">Servicio</th>
+                    <th data-sort="display" data-type="text">Descripción</th>
+                    <th data-sort="pid">PID</th>
+                    <th data-sort="state" data-type="text">Estado</th>
+                    <th data-sort="cpu">CPU %</th>
                   </tr>
                 </thead>
                 <tbody></tbody>
@@ -149,10 +149,10 @@
               <table id="mem-table">
                 <thead>
                   <tr>
-                    <th>Proceso</th>
-                    <th>PID</th>
-                    <th>Memoria</th>
-                    <th>Virtual</th>
+                    <th data-sort="name" data-type="text">Proceso</th>
+                    <th data-sort="pid">PID</th>
+                    <th data-sort="memory">Memoria</th>
+                    <th data-sort="virtual_memory">Virtual</th>
                   </tr>
                 </thead>
                 <tbody></tbody>
@@ -173,13 +173,13 @@
               <table id="storage-table">
                 <thead>
                   <tr>
-                    <th>Unidad</th>
-                    <th>Sistema</th>
-                    <th>Activo</th>
-                    <th>Cola</th>
-                    <th>Libre</th>
-                    <th>Total</th>
-                    <th>Uso</th>
+                    <th data-sort="mount" data-type="text">Unidad</th>
+                    <th data-sort="fs" data-type="text">Sistema</th>
+                    <th data-sort="active_pct">Activo</th>
+                    <th data-sort="queue">Cola</th>
+                    <th data-sort="available">Libre</th>
+                    <th data-sort="total">Total</th>
+                    <th data-sort="usedPct">Uso</th>
                   </tr>
                 </thead>
                 <tbody></tbody>
@@ -193,11 +193,11 @@
               <table id="file-act-table">
                 <thead>
                   <tr>
-                    <th>Proceso</th>
-                    <th>PID</th>
-                    <th>Archivo</th>
-                    <th>Lectura/s</th>
-                    <th>Escritura/s</th>
+                    <th data-sort="name" data-type="text">Proceso</th>
+                    <th data-sort="pid">PID</th>
+                    <th data-sort="file" data-type="text">Archivo</th>
+                    <th data-sort="read_bps">Lectura/s</th>
+                    <th data-sort="write_bps">Escritura/s</th>
                   </tr>
                 </thead>
                 <tbody></tbody>
@@ -208,10 +208,10 @@
               <table id="disk-table">
                 <thead>
                   <tr>
-                    <th>Proceso</th>
-                    <th>PID</th>
-                    <th>Lectura/s</th>
-                    <th>Escritura/s</th>
+                    <th data-sort="name" data-type="text">Proceso</th>
+                    <th data-sort="pid">PID</th>
+                    <th data-sort="read_bps">Lectura/s</th>
+                    <th data-sort="write_bps">Escritura/s</th>
                   </tr>
                 </thead>
                 <tbody></tbody>
@@ -237,11 +237,11 @@
               <table id="net-proc-table">
                 <thead>
                   <tr>
-                    <th>Proceso</th>
-                    <th>PID</th>
-                    <th>Enviado/s</th>
-                    <th>Recibido/s</th>
-                    <th>Total/s</th>
+                    <th data-sort="name" data-type="text">Proceso</th>
+                    <th data-sort="pid">PID</th>
+                    <th data-sort="sent_bps">Enviado/s</th>
+                    <th data-sort="recv_bps">Recibido/s</th>
+                    <th data-sort="total">Total/s</th>
                   </tr>
                 </thead>
                 <tbody></tbody>
@@ -253,12 +253,12 @@
               <table id="conn-table">
                 <thead>
                   <tr>
-                    <th>Proceso</th>
-                    <th>PID</th>
-                    <th>Proto</th>
-                    <th>Local</th>
-                    <th>Remoto</th>
-                    <th>Estado</th>
+                    <th data-sort="process" data-type="text">Proceso</th>
+                    <th data-sort="pid">PID</th>
+                    <th data-sort="protocol" data-type="text">Proto</th>
+                    <th data-sort="local" data-type="text">Local</th>
+                    <th data-sort="remote" data-type="text">Remoto</th>
+                    <th data-sort="state" data-type="text">Estado</th>
                   </tr>
                 </thead>
                 <tbody></tbody>
@@ -269,10 +269,10 @@
               <table id="listen-table">
                 <thead>
                   <tr>
-                    <th>Proceso</th>
-                    <th>PID</th>
-                    <th>Proto</th>
-                    <th>Dirección local</th>
+                    <th data-sort="process" data-type="text">Proceso</th>
+                    <th data-sort="pid">PID</th>
+                    <th data-sort="protocol" data-type="text">Proto</th>
+                    <th data-sort="local" data-type="text">Dirección local</th>
                   </tr>
                 </thead>
                 <tbody></tbody>
@@ -288,7 +288,7 @@
           <table id="proc-table">
             <thead>
               <tr>
-                <th data-sort="name">Proceso</th>
+                <th data-sort="name" data-type="text">Proceso</th>
                 <th data-sort="pid">PID</th>
                 <th data-sort="threads">Hilos</th>
                 <th data-sort="cpu">CPU %</th>
@@ -314,10 +314,10 @@
               <table id="gpu-table">
                 <thead>
                   <tr>
-                    <th>Proceso</th>
-                    <th>PID</th>
-                    <th>Tipo</th>
-                    <th>VRAM</th>
+                    <th data-sort="name" data-type="text">Proceso</th>
+                    <th data-sort="pid">PID</th>
+                    <th data-sort="kind" data-type="text">Tipo</th>
+                    <th data-sort="vram">VRAM</th>
                   </tr>
                 </thead>
                 <tbody></tbody>
