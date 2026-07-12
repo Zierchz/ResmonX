@@ -3,6 +3,7 @@ name = "resmonx"
 version = "0.2.0"
 description = "Monitor de recursos para Windows"
 authors = ["Zierchz"]
+license-file = "../LICENSE"
 edition = "2021"
 
 [lib]
