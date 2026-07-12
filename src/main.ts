@@ -181,13 +181,14 @@ function sparkline(values: number[], max: number, color: string): string {
   </svg>`;
 }
 
-// color por recurso (coincide con las variables CSS)
+// acento único para sparklines y valores (coincide con --accent en CSS)
+const ACCENT = "#6d8db3";
 const COLORS = {
-  cpu: "#4fc3f7",
-  mem: "#ba68c8",
-  net: "#81c784",
-  disk: "#ffb74d",
-  gpu: "#e57373",
+  cpu: ACCENT,
+  mem: ACCENT,
+  net: ACCENT,
+  disk: ACCENT,
+  gpu: ACCENT,
 };
 
 // clase de severidad según porcentaje de uso
