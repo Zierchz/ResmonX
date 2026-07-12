@@ -2,6 +2,7 @@ pub mod control;
 mod cpufreq;
 mod etw;
 mod gpu;
+pub mod icons;
 mod net;
 mod pdh;
 mod services;

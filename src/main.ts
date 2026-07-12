@@ -197,6 +197,50 @@ function sevClass(pct: number): string {
   return "sev-ok";
 }
 
+// fondo tipo heatmap (estilo Task Manager): naranja translúcido por intensidad
+function heat(ratio: number): string {
+  const r = Math.max(0, Math.min(1, ratio));
+  if (r < 0.015) return "";
+  return ` style="background:rgba(255,140,0,${(0.07 + 0.4 * r).toFixed(3)})"`;
+}
+
+// iconos de procesos: cache por ruta + carga diferida vía backend
+const iconCache = new Map<string, string | null>();
+const iconInflight = new Set<string>();
+
+function procIcon(exe: string): string {
+  if (!exe) return `<img class="pico" alt="">`;
+  const cached = iconCache.get(exe);
+  const src = cached ? ` src="${cached}"` : "";
+  return `<img class="pico" alt="" data-exe="${esc(exe)}"${src}>`;
+}
+
+function hydrateIcons() {
+  const pending = document.querySelectorAll<HTMLImageElement>("img.pico:not([src])");
+  const need = new Set<string>();
+  pending.forEach((img) => {
+    const exe = img.dataset.exe;
+    if (!exe) return;
+    const cached = iconCache.get(exe);
+    if (cached) img.src = cached;
+    else if (cached === undefined) need.add(exe);
+  });
+  need.forEach((exe) => {
+    if (iconInflight.has(exe)) return;
+    iconInflight.add(exe);
+    invoke<string | null>("get_icon", { path: exe })
+      .then((uri) => {
+        iconCache.set(exe, uri ?? null);
+        iconInflight.delete(exe);
+        if (!uri) return;
+        document.querySelectorAll<HTMLImageElement>("img.pico").forEach((img) => {
+          if (img.dataset.exe === exe && !img.getAttribute("src")) img.src = uri;
+        });
+      })
+      .catch(() => iconInflight.delete(exe));
+  });
+}
+
 function card(title: string, value: string, detail: string, spark: string, accent = ""): string {
   const style = accent ? ` style="--card-accent:${accent}"` : "";
   return `<div class="card"${style}>
@@ -282,15 +326,23 @@ function gpuCard(s: Snapshot): string {
   );
 }
 
-function procRow(p: ProcessSnapshot, netByPid: Map<number, number>, etw: boolean): string {
-  const net = etw ? fmtBytes(netByPid.get(p.pid) ?? 0, "/s") : "—";
+interface ColMax {
+  mem: number;
+  disk: number;
+  net: number;
+}
+
+function procRow(p: ProcessSnapshot, netByPid: Map<number, number>, etw: boolean, max: ColMax): string {
+  const netBps = netByPid.get(p.pid) ?? 0;
+  const net = etw ? fmtBytes(netBps, "/s") : "—";
+  const io = p.read_bps + p.write_bps;
   return `<tr data-pid="${p.pid}" data-name="${esc(p.name)}" data-exe="${esc(p.exe)}">
-    <td>${esc(p.name)}</td>
+    <td class="pname">${procIcon(p.exe)}${esc(p.name)}</td>
     <td class="num">${p.pid}</td>
-    <td class="num">${p.cpu.toFixed(1)}</td>
-    <td class="num">${fmtBytes(p.memory)}</td>
-    <td class="num">${fmtBytes(p.read_bps + p.write_bps, "/s")}</td>
-    <td class="num">${net}</td>
+    <td class="num"${heat(p.cpu / 100)}>${p.cpu.toFixed(1)}</td>
+    <td class="num"${heat(p.memory / max.mem)}>${fmtBytes(p.memory)}</td>
+    <td class="num"${heat(io / max.disk)}>${fmtBytes(io, "/s")}</td>
+    <td class="num"${etw ? heat(netBps / max.net) : ""}>${net}</td>
     <td class="num">${p.threads}</td>
   </tr>`;
 }
@@ -319,10 +371,13 @@ function renderOverview(s: Snapshot) {
   document.getElementById("overview-cards")!.innerHTML = cards.join("");
 
   const netByPid = new Map(s.net_procs.map((p) => [p.pid, p.sent_bps + p.recv_bps]));
-  const procRows = s.processes
-    .slice(0, 60)
-    .map((p) => procRow(p, netByPid, s.etw))
-    .join("");
+  const top = s.processes.slice(0, 60);
+  const max: ColMax = {
+    mem: Math.max(1, ...top.map((p) => p.memory)),
+    disk: Math.max(1, ...top.map((p) => p.read_bps + p.write_bps)),
+    net: Math.max(1, ...top.map((p) => netByPid.get(p.pid) ?? 0)),
+  };
+  const procRows = top.map((p) => procRow(p, netByPid, s.etw, max)).join("");
   document.querySelector("#ov-proc-table tbody")!.innerHTML = procRows;
 
   document.querySelector("#ov-svc-table tbody")!.innerHTML = serviceRows(s);
@@ -469,17 +524,20 @@ function renderProcesses(s: Snapshot) {
     const cmp = typeof va === "string" ? va.localeCompare(vb as string) : (va as number) - (vb as number);
     return procSortAsc ? cmp : -cmp;
   });
+  const maxMem = Math.max(1, ...procs.map((p) => p.memory));
+  const maxRead = Math.max(1, ...procs.map((p) => p.read_bps));
+  const maxWrite = Math.max(1, ...procs.map((p) => p.write_bps));
   const rows = procs
     .map(
       (p) => `<tr data-pid="${p.pid}" data-name="${esc(p.name)}" data-exe="${esc(p.exe)}">
-        <td>${esc(p.name)}</td>
+        <td class="pname">${procIcon(p.exe)}${esc(p.name)}</td>
         <td class="num">${p.pid}</td>
         <td class="num">${p.threads}</td>
-        <td class="num">${p.cpu.toFixed(1)}</td>
-        <td class="num">${fmtBytes(p.memory)}</td>
+        <td class="num"${heat(p.cpu / 100)}>${p.cpu.toFixed(1)}</td>
+        <td class="num"${heat(p.memory / maxMem)}>${fmtBytes(p.memory)}</td>
         <td class="num">${fmtBytes(p.virtual_memory)}</td>
-        <td class="num">${fmtBytes(p.read_bps, "/s")}</td>
-        <td class="num">${fmtBytes(p.write_bps, "/s")}</td>
+        <td class="num"${heat(p.read_bps / maxRead)}>${fmtBytes(p.read_bps, "/s")}</td>
+        <td class="num"${heat(p.write_bps / maxWrite)}>${fmtBytes(p.write_bps, "/s")}</td>
       </tr>`,
     )
     .join("");
@@ -814,6 +872,7 @@ function render(s: Snapshot) {
   else if (activeTab === "network") renderNetwork(s);
   else if (activeTab === "disk") renderDisk(s);
   else if (activeTab === "gpu") renderGpu(s);
+  hydrateIcons();
 }
 
 async function tick() {
@@ -834,38 +893,30 @@ async function tick() {
   }
 }
 
-// color de cada carpeta (Resumen y Procesos usan tonos neutros propios)
-const FOLDER: Record<string, string> = {
-  overview: "#b0bec5",
-  cpu: COLORS.cpu,
-  memory: COLORS.mem,
-  disk: COLORS.disk,
-  network: COLORS.net,
-  processes: "#9fa8da",
-  gpu: COLORS.gpu,
+// título mostrado en la barra superior por sección
+const TITLES: Record<string, string> = {
+  overview: "Resumen",
+  cpu: "CPU",
+  memory: "Memoria",
+  disk: "Disco",
+  network: "Red",
+  processes: "Procesos",
+  gpu: "GPU",
 };
 
-function setFolderAccent(tab: string) {
-  const body = document.querySelector<HTMLElement>(".folder-body")!;
-  body.style.setProperty("--folder-accent", FOLDER[tab] ?? "var(--accent)");
-}
-
 function setupUi() {
-  document.querySelectorAll<HTMLButtonElement>(".folder-tab").forEach((btn) => {
+  document.querySelectorAll<HTMLButtonElement>(".nav-item").forEach((btn) => {
     const tab = btn.dataset.tab!;
-    // cada lengüeta lleva el color de su recurso
-    btn.style.setProperty("--folder", FOLDER[tab] ?? "var(--text-dim)");
     btn.addEventListener("click", () => {
       activeTab = tab;
-      document.querySelectorAll(".folder-tab").forEach((b) => b.classList.toggle("active", b === btn));
+      document.querySelectorAll(".nav-item").forEach((b) => b.classList.toggle("active", b === btn));
       document
         .querySelectorAll(".view")
         .forEach((v) => v.classList.toggle("active", v.id === `view-${activeTab}`));
-      setFolderAccent(activeTab);
+      document.getElementById("view-title")!.textContent = TITLES[tab] ?? "";
       if (lastSnapshot) render(lastSnapshot);
     });
   });
-  setFolderAccent(activeTab);
 
   document.querySelectorAll<HTMLTableCellElement>("#proc-table th").forEach((th) => {
     th.addEventListener("click", () => {

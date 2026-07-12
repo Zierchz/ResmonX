@@ -22,6 +22,7 @@ sysinfo = "0.36"
 netstat2 = "0.11"
 nvml-wrapper = "0.11"
 ferrisetw = "1.2"
+image = { version = "0.25", default-features = false, features = ["png"] }
 windows = { version = "0.62", features = [
     "Win32_Foundation",
     "Win32_System_Performance",
@@ -30,4 +31,7 @@ windows = { version = "0.62", features = [
     "Win32_System_Diagnostics_Etw",
     "Win32_Storage_FileSystem",
     "Win32_System_Threading",
+    "Win32_UI_Shell",
+    "Win32_UI_WindowsAndMessaging",
+    "Win32_Graphics_Gdi",
 ] }

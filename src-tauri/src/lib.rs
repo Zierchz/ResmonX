@@ -12,6 +12,7 @@ pub fn run() {
             monitor::control::kill_process_tree,
             monitor::control::suspend_process,
             monitor::control::resume_process,
+            monitor::icons::get_icon,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");
