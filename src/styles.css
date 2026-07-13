@@ -377,8 +377,46 @@ img.pico:not([src]) {
   font-weight: 600;
 }
 
-.table-wrap.short {
-  max-height: 340px;
+/* sub-tabs: una tabla a la vez dentro de una sección */
+.subtabs {
+  display: flex;
+  gap: 4px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid var(--border);
+}
+
+/* separación cuando van tras un elemento fijo (núcleos, interfaces) */
+.subtabs:not(:first-child) {
+  margin-top: 20px;
+}
+
+.subtab {
+  background: none;
+  border: none;
+  border-bottom: 2px solid transparent;
+  color: var(--text-dim);
+  padding: 8px 12px;
+  margin-bottom: -1px;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 13px;
+}
+
+.subtab:hover {
+  color: var(--text);
+}
+
+.subtab.active {
+  color: var(--text);
+  border-bottom-color: var(--accent);
+}
+
+.subview {
+  display: none;
+}
+
+.subview.active {
+  display: block;
 }
 
 .core-grid {

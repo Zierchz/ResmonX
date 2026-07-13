@@ -166,6 +166,11 @@ function refreshSortIndicators() {
 }
 
 function push(arr: number[], v: number) {
+  // primera muestra: rellena el historial para que la sparkline salga completa
+  if (arr.length === 0) {
+    for (let i = 0; i < HISTORY_LEN; i++) arr.push(v);
+    return;
+  }
   arr.push(v);
   if (arr.length > HISTORY_LEN) arr.shift();
 }
@@ -398,7 +403,7 @@ function renderOverview(s: Snapshot) {
     io: p.read_bps + p.write_bps,
     net: netByPid.get(p.pid) ?? 0,
   }));
-  const top = sortRows("ov-proc-table", enriched, { key: "cpu", asc: false }).slice(0, 60);
+  const top = sortRows("ov-proc-table", enriched, { key: "cpu", asc: false });
   const max: ColMax = {
     mem: Math.max(1, ...top.map((p) => p.memory)),
     disk: Math.max(1, ...top.map((p) => p.io)),
@@ -439,7 +444,6 @@ function renderCpu(s: Snapshot) {
     .join("");
 
   const rows = sortRows("cpu-proc-table", s.processes, { key: "cpu", asc: false })
-    .slice(0, 15)
     .map(
       (p) => `<tr data-pid="${p.pid}" data-name="${esc(p.name)}" data-exe="${esc(p.exe)}">
         <td class="pname">${procIcon(p.exe)}${esc(p.name)}</td>
@@ -521,7 +525,6 @@ function renderMemory(s: Snapshot) {
     `<div class="mem-bar">${bar}</div><div class="legend">${legend}</div>`;
 
   const rows = sortRows("mem-table", s.processes, { key: "memory", asc: false })
-    .slice(0, 50)
     .map(
       (p) => `<tr data-pid="${p.pid}" data-name="${esc(p.name)}" data-exe="${esc(p.exe)}">
         <td class="pname">${procIcon(p.exe)}${esc(p.name)}</td>
@@ -710,7 +713,6 @@ function renderDisk(s: Snapshot) {
     .filter((p) => p.read_bps > 0 || p.write_bps > 0)
     .map((p) => ({ ...p, io: p.read_bps + p.write_bps }));
   const rows = sortRows("disk-table", ioProcs, { key: "io", asc: false })
-    .slice(0, 50)
     .map(
       (p) => `<tr data-pid="${p.pid}" data-name="${esc(p.name)}" data-exe="${esc(p.exe)}">
         <td class="pname">${procIcon(p.exe)}${esc(p.name)}</td>
@@ -936,6 +938,22 @@ const TITLES: Record<string, string> = {
   gpu: "GPU",
 };
 
+// sub-tabs dentro de una sección: muestra una tabla a la vez
+function setupSubtabs() {
+  document.querySelectorAll<HTMLElement>(".subtabs").forEach((bar) => {
+    bar.addEventListener("click", (ev) => {
+      const btn = (ev.target as HTMLElement).closest(".subtab") as HTMLElement | null;
+      if (!btn) return;
+      const group = bar.parentElement!;
+      const sub = btn.dataset.sub!;
+      group.querySelectorAll(".subtab").forEach((b) => b.classList.toggle("active", b === btn));
+      group
+        .querySelectorAll<HTMLElement>(".subview")
+        .forEach((v) => v.classList.toggle("active", v.dataset.sub === sub));
+    });
+  });
+}
+
 function setupUi() {
   document.querySelectorAll<HTMLButtonElement>(".nav-item").forEach((btn) => {
     const tab = btn.dataset.tab!;
@@ -973,6 +991,7 @@ function setupUi() {
     });
   }
 
+  setupSubtabs();
   setupContextMenu();
 }
 

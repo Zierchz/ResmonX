@@ -59,36 +59,42 @@
             <div class="cards stacked" id="overview-cards"></div>
           </aside>
           <div class="split-main">
-            <h2 class="section-title">Procesos</h2>
-            <div class="table-wrap short">
-              <table id="ov-proc-table">
-                <thead>
-                  <tr>
-                    <th data-sort="name" data-type="text">Proceso</th>
-                    <th data-sort="pid">PID</th>
-                    <th data-sort="cpu">CPU %</th>
-                    <th data-sort="memory">RAM</th>
-                    <th data-sort="io">Disco/s</th>
-                    <th data-sort="net">Red/s</th>
-                    <th data-sort="threads">Hilos</th>
-                  </tr>
-                </thead>
-                <tbody></tbody>
-              </table>
+            <div class="subtabs">
+              <button class="subtab active" data-sub="proc">Procesos</button>
+              <button class="subtab" data-sub="svc">Servicios</button>
             </div>
-            <h2 class="section-title">Servicios</h2>
-            <div class="table-wrap short">
-              <table id="ov-svc-table">
-                <thead>
-                  <tr>
-                    <th data-sort="name" data-type="text">Servicio</th>
-                    <th data-sort="display" data-type="text">Descripción</th>
-                    <th data-sort="pid">PID</th>
-                    <th data-sort="state" data-type="text">Estado</th>
-                  </tr>
-                </thead>
-                <tbody></tbody>
-              </table>
+            <div class="subview active" data-sub="proc">
+              <div class="table-wrap">
+                <table id="ov-proc-table">
+                  <thead>
+                    <tr>
+                      <th data-sort="name" data-type="text">Proceso</th>
+                      <th data-sort="pid">PID</th>
+                      <th data-sort="cpu">CPU %</th>
+                      <th data-sort="memory">RAM</th>
+                      <th data-sort="io">Disco/s</th>
+                      <th data-sort="net">Red/s</th>
+                      <th data-sort="threads">Hilos</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </div>
+            <div class="subview" data-sub="svc">
+              <div class="table-wrap">
+                <table id="ov-svc-table">
+                  <thead>
+                    <tr>
+                      <th data-sort="name" data-type="text">Servicio</th>
+                      <th data-sort="display" data-type="text">Descripción</th>
+                      <th data-sort="pid">PID</th>
+                      <th data-sort="state" data-type="text">Estado</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
             </div>
           </div>
         </div>
@@ -102,35 +108,41 @@
           <div class="split-main">
             <h2 class="section-title">Núcleos lógicos</h2>
             <div id="core-grid" class="core-grid"></div>
-            <h2 class="section-title">Procesos</h2>
-            <div class="table-wrap short">
-              <table id="cpu-proc-table">
-                <thead>
-                  <tr>
-                    <th data-sort="name" data-type="text">Proceso</th>
-                    <th data-sort="pid">PID</th>
-                    <th data-sort="threads">Hilos</th>
-                    <th data-sort="cpu">CPU %</th>
-                  </tr>
-                </thead>
-                <tbody></tbody>
-              </table>
+            <div class="subtabs">
+              <button class="subtab active" data-sub="proc">Procesos</button>
+              <button class="subtab" data-sub="svc">Servicios</button>
             </div>
-            <h2 class="section-title">Servicios</h2>
-            <input id="svc-filter" class="filter" type="text" placeholder="Filtrar servicios…" />
-            <div class="table-wrap short">
-              <table id="svc-table">
-                <thead>
-                  <tr>
-                    <th data-sort="name" data-type="text">Servicio</th>
-                    <th data-sort="display" data-type="text">Descripción</th>
-                    <th data-sort="pid">PID</th>
-                    <th data-sort="state" data-type="text">Estado</th>
-                    <th data-sort="cpu">CPU %</th>
-                  </tr>
-                </thead>
-                <tbody></tbody>
-              </table>
+            <div class="subview active" data-sub="proc">
+              <div class="table-wrap">
+                <table id="cpu-proc-table">
+                  <thead>
+                    <tr>
+                      <th data-sort="name" data-type="text">Proceso</th>
+                      <th data-sort="pid">PID</th>
+                      <th data-sort="threads">Hilos</th>
+                      <th data-sort="cpu">CPU %</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
+            </div>
+            <div class="subview" data-sub="svc">
+              <input id="svc-filter" class="filter" type="text" placeholder="Filtrar servicios…" />
+              <div class="table-wrap">
+                <table id="svc-table">
+                  <thead>
+                    <tr>
+                      <th data-sort="name" data-type="text">Servicio</th>
+                      <th data-sort="display" data-type="text">Descripción</th>
+                      <th data-sort="pid">PID</th>
+                      <th data-sort="state" data-type="text">Estado</th>
+                      <th data-sort="cpu">CPU %</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
             </div>
           </div>
         </div>
@@ -168,54 +180,62 @@
             <div class="cards stacked" id="disk-cards"></div>
           </aside>
           <div class="split-main">
-            <h2 class="section-title">Almacenamiento</h2>
-            <div class="table-wrap short">
-              <table id="storage-table">
-                <thead>
-                  <tr>
-                    <th data-sort="mount" data-type="text">Unidad</th>
-                    <th data-sort="fs" data-type="text">Sistema</th>
-                    <th data-sort="active_pct">Activo</th>
-                    <th data-sort="queue">Cola</th>
-                    <th data-sort="available">Libre</th>
-                    <th data-sort="total">Total</th>
-                    <th data-sort="usedPct">Uso</th>
-                  </tr>
-                </thead>
-                <tbody></tbody>
-              </table>
+            <div class="subtabs">
+              <button class="subtab active" data-sub="storage">Almacenamiento</button>
+              <button class="subtab" data-sub="files">Por archivo</button>
+              <button class="subtab" data-sub="proc">Procesos</button>
             </div>
-            <h2 class="section-title">Actividad de disco por archivo</h2>
-            <div id="file-etw-notice" class="notice" hidden>
-              Ejecuta ResmonX como administrador para ver la actividad de disco por archivo.
+            <div class="subview active" data-sub="storage">
+              <div class="table-wrap">
+                <table id="storage-table">
+                  <thead>
+                    <tr>
+                      <th data-sort="mount" data-type="text">Unidad</th>
+                      <th data-sort="fs" data-type="text">Sistema</th>
+                      <th data-sort="active_pct">Activo</th>
+                      <th data-sort="queue">Cola</th>
+                      <th data-sort="available">Libre</th>
+                      <th data-sort="total">Total</th>
+                      <th data-sort="usedPct">Uso</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
             </div>
-            <div class="table-wrap short" id="file-act-wrap" hidden>
-              <table id="file-act-table">
-                <thead>
-                  <tr>
-                    <th data-sort="name" data-type="text">Proceso</th>
-                    <th data-sort="pid">PID</th>
-                    <th data-sort="file" data-type="text">Archivo</th>
-                    <th data-sort="read_bps">Lectura/s</th>
-                    <th data-sort="write_bps">Escritura/s</th>
-                  </tr>
-                </thead>
-                <tbody></tbody>
-              </table>
+            <div class="subview" data-sub="files">
+              <div id="file-etw-notice" class="notice" hidden>
+                Ejecuta ResmonX como administrador para ver la actividad de disco por archivo.
+              </div>
+              <div class="table-wrap" id="file-act-wrap" hidden>
+                <table id="file-act-table">
+                  <thead>
+                    <tr>
+                      <th data-sort="name" data-type="text">Proceso</th>
+                      <th data-sort="pid">PID</th>
+                      <th data-sort="file" data-type="text">Archivo</th>
+                      <th data-sort="read_bps">Lectura/s</th>
+                      <th data-sort="write_bps">Escritura/s</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
             </div>
-            <h2 class="section-title">Procesos con actividad de disco</h2>
-            <div class="table-wrap short">
-              <table id="disk-table">
-                <thead>
-                  <tr>
-                    <th data-sort="name" data-type="text">Proceso</th>
-                    <th data-sort="pid">PID</th>
-                    <th data-sort="read_bps">Lectura/s</th>
-                    <th data-sort="write_bps">Escritura/s</th>
-                  </tr>
-                </thead>
-                <tbody></tbody>
-              </table>
+            <div class="subview" data-sub="proc">
+              <div class="table-wrap">
+                <table id="disk-table">
+                  <thead>
+                    <tr>
+                      <th data-sort="name" data-type="text">Proceso</th>
+                      <th data-sort="pid">PID</th>
+                      <th data-sort="read_bps">Lectura/s</th>
+                      <th data-sort="write_bps">Escritura/s</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
             </div>
           </div>
         </div>
@@ -229,54 +249,62 @@
           <div class="split-main">
             <h2 class="section-title">Por interfaz</h2>
             <div class="cards" id="nic-cards"></div>
-            <h2 class="section-title">Procesos con actividad de red</h2>
-            <div id="net-etw-notice" class="notice" hidden>
-              Ejecuta ResmonX como administrador para ver la actividad de red por proceso.
+            <div class="subtabs">
+              <button class="subtab active" data-sub="proc">Procesos</button>
+              <button class="subtab" data-sub="conns">Conexiones</button>
+              <button class="subtab" data-sub="listen">Escucha</button>
             </div>
-            <div class="table-wrap short" id="net-proc-wrap" hidden>
-              <table id="net-proc-table">
-                <thead>
-                  <tr>
-                    <th data-sort="name" data-type="text">Proceso</th>
-                    <th data-sort="pid">PID</th>
-                    <th data-sort="sent_bps">Enviado/s</th>
-                    <th data-sort="recv_bps">Recibido/s</th>
-                    <th data-sort="total">Total/s</th>
-                  </tr>
-                </thead>
-                <tbody></tbody>
-              </table>
+            <div class="subview active" data-sub="proc">
+              <div id="net-etw-notice" class="notice" hidden>
+                Ejecuta ResmonX como administrador para ver la actividad de red por proceso.
+              </div>
+              <div class="table-wrap" id="net-proc-wrap" hidden>
+                <table id="net-proc-table">
+                  <thead>
+                    <tr>
+                      <th data-sort="name" data-type="text">Proceso</th>
+                      <th data-sort="pid">PID</th>
+                      <th data-sort="sent_bps">Enviado/s</th>
+                      <th data-sort="recv_bps">Recibido/s</th>
+                      <th data-sort="total">Total/s</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
             </div>
-            <h2 class="section-title">Conexiones TCP</h2>
-            <input id="conn-filter" class="filter" type="text" placeholder="Filtrar conexiones…" />
-            <div class="table-wrap short">
-              <table id="conn-table">
-                <thead>
-                  <tr>
-                    <th data-sort="process" data-type="text">Proceso</th>
-                    <th data-sort="pid">PID</th>
-                    <th data-sort="protocol" data-type="text">Proto</th>
-                    <th data-sort="local" data-type="text">Local</th>
-                    <th data-sort="remote" data-type="text">Remoto</th>
-                    <th data-sort="state" data-type="text">Estado</th>
-                  </tr>
-                </thead>
-                <tbody></tbody>
-              </table>
+            <div class="subview" data-sub="conns">
+              <input id="conn-filter" class="filter" type="text" placeholder="Filtrar conexiones…" />
+              <div class="table-wrap">
+                <table id="conn-table">
+                  <thead>
+                    <tr>
+                      <th data-sort="process" data-type="text">Proceso</th>
+                      <th data-sort="pid">PID</th>
+                      <th data-sort="protocol" data-type="text">Proto</th>
+                      <th data-sort="local" data-type="text">Local</th>
+                      <th data-sort="remote" data-type="text">Remoto</th>
+                      <th data-sort="state" data-type="text">Estado</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
             </div>
-            <h2 class="section-title">Puertos de escucha</h2>
-            <div class="table-wrap short">
-              <table id="listen-table">
-                <thead>
-                  <tr>
-                    <th data-sort="process" data-type="text">Proceso</th>
-                    <th data-sort="pid">PID</th>
-                    <th data-sort="protocol" data-type="text">Proto</th>
-                    <th data-sort="local" data-type="text">Dirección local</th>
-                  </tr>
-                </thead>
-                <tbody></tbody>
-              </table>
+            <div class="subview" data-sub="listen">
+              <div class="table-wrap">
+                <table id="listen-table">
+                  <thead>
+                    <tr>
+                      <th data-sort="process" data-type="text">Proceso</th>
+                      <th data-sort="pid">PID</th>
+                      <th data-sort="protocol" data-type="text">Proto</th>
+                      <th data-sort="local" data-type="text">Dirección local</th>
+                    </tr>
+                  </thead>
+                  <tbody></tbody>
+                </table>
+              </div>
             </div>
           </div>
         </div>

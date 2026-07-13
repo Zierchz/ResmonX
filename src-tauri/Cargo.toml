@@ -1,6 +1,6 @@
 [package]
 name = "resmonx"
-version = "0.2.2"
+version = "0.2.3"
 description = "Monitor de recursos para Windows"
 authors = ["Zierchz"]
 license-file = "../LICENSE"
@@ -35,4 +35,6 @@ windows = { version = "0.62", features = [
     "Win32_UI_Shell",
     "Win32_UI_WindowsAndMessaging",
     "Win32_Graphics_Gdi",
+    "Wdk_System_SystemInformation",
+    "Win32_System_WindowsProgramming",
 ] }

@@ -5,6 +5,7 @@ mod gpu;
 pub mod icons;
 mod net;
 mod pdh;
+mod procmem;
 mod services;
 mod threads;
 
@@ -158,6 +159,8 @@ pub fn get_snapshot(state: tauri::State<MonitorState>) -> Snapshot {
     inner.disks.refresh(true);
     inner.counters.collect();
     let thread_map = threads::thread_counts();
+    // working set fiable por pid (sysinfo devuelve 0 para procesos como vmmemWSL)
+    let ws_map = procmem::working_sets();
 
     let cores = inner.sys.cpus().len().max(1);
     let names: HashMap<u32, String> = inner
@@ -204,6 +207,9 @@ pub fn get_snapshot(state: tauri::State<MonitorState>) -> Snapshot {
         .map(|p| {
             let du = p.disk_usage();
             let pid = p.pid().as_u32();
+            // si sysinfo no pudo leer la memoria (0), usa el working set del sistema
+            let mem = p.memory();
+            let memory = if mem == 0 { ws_map.get(&pid).copied().unwrap_or(0) } else { mem };
             ProcessSnapshot {
                 pid,
                 name: p.name().to_string_lossy().into_owned(),
@@ -212,7 +218,7 @@ pub fn get_snapshot(state: tauri::State<MonitorState>) -> Snapshot {
                     .map(|e| e.to_string_lossy().into_owned())
                     .unwrap_or_default(),
                 cpu: p.cpu_usage() / cores as f32,
-                memory: p.memory(),
+                memory,
                 virtual_memory: p.virtual_memory(),
                 threads: thread_map.get(&pid).copied().unwrap_or(0),
                 read_bps: (du.read_bytes as f64 / elapsed) as u64,
