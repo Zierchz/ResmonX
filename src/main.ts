@@ -195,6 +195,13 @@ function esc(s: string): string {
     .replace(/"/g, "&quot;");
 }
 
+// filtra filas por nombre (subcadena) o PID exacto, según el input dado
+function applyFilter<T extends { name: string; pid: number }>(rows: T[], inputId: string): T[] {
+  const q = (document.getElementById(inputId) as HTMLInputElement | null)?.value.toLowerCase().trim() ?? "";
+  if (!q) return rows;
+  return rows.filter((r) => r.name.toLowerCase().includes(q) || String(r.pid) === q);
+}
+
 function sparkline(values: number[], max: number, color: string): string {
   const w = 260;
   const h = 60;
@@ -403,7 +410,7 @@ function renderOverview(s: Snapshot) {
     io: p.read_bps + p.write_bps,
     net: netByPid.get(p.pid) ?? 0,
   }));
-  const top = sortRows("ov-proc-table", enriched, { key: "cpu", asc: false });
+  const top = sortRows("ov-proc-table", applyFilter(enriched, "ov-proc-filter"), { key: "cpu", asc: false });
   const max: ColMax = {
     mem: Math.max(1, ...top.map((p) => p.memory)),
     disk: Math.max(1, ...top.map((p) => p.io)),
@@ -443,7 +450,7 @@ function renderCpu(s: Snapshot) {
     )
     .join("");
 
-  const rows = sortRows("cpu-proc-table", s.processes, { key: "cpu", asc: false })
+  const rows = sortRows("cpu-proc-table", applyFilter(s.processes, "cpu-proc-filter"), { key: "cpu", asc: false })
     .map(
       (p) => `<tr data-pid="${p.pid}" data-name="${esc(p.name)}" data-exe="${esc(p.exe)}">
         <td class="pname">${procIcon(p.exe)}${esc(p.name)}</td>
@@ -524,7 +531,7 @@ function renderMemory(s: Snapshot) {
   document.getElementById("mem-bar")!.innerHTML =
     `<div class="mem-bar">${bar}</div><div class="legend">${legend}</div>`;
 
-  const rows = sortRows("mem-table", s.processes, { key: "memory", asc: false })
+  const rows = sortRows("mem-table", applyFilter(s.processes, "mem-filter"), { key: "memory", asc: false })
     .map(
       (p) => `<tr data-pid="${p.pid}" data-name="${esc(p.name)}" data-exe="${esc(p.exe)}">
         <td class="pname">${procIcon(p.exe)}${esc(p.name)}</td>
@@ -538,12 +545,7 @@ function renderMemory(s: Snapshot) {
 }
 
 function renderProcesses(s: Snapshot) {
-  const filter = (document.getElementById("proc-filter") as HTMLInputElement).value.toLowerCase();
-  let procs = s.processes;
-  if (filter) {
-    procs = procs.filter((p) => p.name.toLowerCase().includes(filter) || String(p.pid) === filter);
-  }
-  procs = sortRows("proc-table", procs, { key: "cpu", asc: false });
+  const procs = sortRows("proc-table", applyFilter(s.processes, "proc-filter"), { key: "cpu", asc: false });
   const maxMem = Math.max(1, ...procs.map((p) => p.memory));
   const maxRead = Math.max(1, ...procs.map((p) => p.read_bps));
   const maxWrite = Math.max(1, ...procs.map((p) => p.write_bps));
@@ -596,7 +598,7 @@ function renderNetwork(s: Snapshot) {
   toggleEtw("net-etw-notice", "net-proc-wrap", s.etw);
   if (s.etw) {
     const netEnriched = s.net_procs.map((p) => ({ ...p, total: p.sent_bps + p.recv_bps }));
-    const netRows = sortRows("net-proc-table", netEnriched, { key: "total", asc: false })
+    const netRows = sortRows("net-proc-table", applyFilter(netEnriched, "net-proc-filter"), { key: "total", asc: false })
       .map(
         (p) => `<tr data-pid="${p.pid}" data-name="${esc(p.name)}" data-exe="">
           <td>${esc(p.name)}</td>
@@ -712,7 +714,7 @@ function renderDisk(s: Snapshot) {
   const ioProcs = s.processes
     .filter((p) => p.read_bps > 0 || p.write_bps > 0)
     .map((p) => ({ ...p, io: p.read_bps + p.write_bps }));
-  const rows = sortRows("disk-table", ioProcs, { key: "io", asc: false })
+  const rows = sortRows("disk-table", applyFilter(ioProcs, "disk-filter"), { key: "io", asc: false })
     .map(
       (p) => `<tr data-pid="${p.pid}" data-name="${esc(p.name)}" data-exe="${esc(p.exe)}">
         <td class="pname">${procIcon(p.exe)}${esc(p.name)}</td>
@@ -740,7 +742,7 @@ function renderGpu(s: Snapshot) {
     card("VRAM", `${fmtBytes(g.mem_used)} / ${fmtBytes(g.mem_total)}`, "", "", COLORS.gpu) +
     card("Temperatura", `${g.temp}°C`, `${g.power_w.toFixed(1)} W`, "", COLORS.gpu);
 
-  const rows = sortRows("gpu-table", g.processes, { key: "vram", asc: false })
+  const rows = sortRows("gpu-table", applyFilter(g.processes, "gpu-filter"), { key: "vram", asc: false })
     .map(
       (p) => `<tr data-pid="${p.pid}" data-name="${esc(p.name)}" data-exe="">
         <td>${esc(p.name)}</td>
@@ -985,11 +987,11 @@ function setupUi() {
     if (lastSnapshot) render(lastSnapshot);
   });
 
-  for (const id of ["proc-filter", "conn-filter", "svc-filter"]) {
-    document.getElementById(id)!.addEventListener("input", () => {
+  document.querySelectorAll<HTMLInputElement>(".filter").forEach((el) =>
+    el.addEventListener("input", () => {
       if (lastSnapshot) render(lastSnapshot);
-    });
-  }
+    }),
+  );
 
   setupSubtabs();
   setupContextMenu();

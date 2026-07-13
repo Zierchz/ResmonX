@@ -64,6 +64,7 @@
               <button class="subtab" data-sub="svc">Servicios</button>
             </div>
             <div class="subview active" data-sub="proc">
+              <input id="ov-proc-filter" class="filter" type="text" placeholder="Filtrar procesos…" />
               <div class="table-wrap">
                 <table id="ov-proc-table">
                   <thead>
@@ -113,6 +114,7 @@
               <button class="subtab" data-sub="svc">Servicios</button>
             </div>
             <div class="subview active" data-sub="proc">
+              <input id="cpu-proc-filter" class="filter" type="text" placeholder="Filtrar procesos…" />
               <div class="table-wrap">
                 <table id="cpu-proc-table">
                   <thead>
@@ -157,6 +159,7 @@
             <h2 class="section-title">Memoria física</h2>
             <div class="panel" id="mem-bar"></div>
             <h2 class="section-title">Procesos</h2>
+            <input id="mem-filter" class="filter" type="text" placeholder="Filtrar procesos…" />
             <div class="table-wrap">
               <table id="mem-table">
                 <thead>
@@ -223,6 +226,7 @@
               </div>
             </div>
             <div class="subview" data-sub="proc">
+              <input id="disk-filter" class="filter" type="text" placeholder="Filtrar procesos…" />
               <div class="table-wrap">
                 <table id="disk-table">
                   <thead>
@@ -258,6 +262,7 @@
               <div id="net-etw-notice" class="notice" hidden>
                 Ejecuta ResmonX como administrador para ver la actividad de red por proceso.
               </div>
+              <input id="net-proc-filter" class="filter" type="text" placeholder="Filtrar procesos…" />
               <div class="table-wrap" id="net-proc-wrap" hidden>
                 <table id="net-proc-table">
                   <thead>
@@ -338,6 +343,7 @@
           </aside>
           <div class="split-main">
             <h2 class="section-title">Procesos en la GPU</h2>
+            <input id="gpu-filter" class="filter" type="text" placeholder="Filtrar procesos…" />
             <div class="table-wrap">
               <table id="gpu-table">
                 <thead>
