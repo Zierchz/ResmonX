@@ -1,0 +1,302 @@
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ResmonX — Monitor de recursos para Windows</title>
+    <meta
+      name="description"
+      content="ResmonX es un monitor de recursos para Windows: ligero, honesto y con el estilo del Administrador de tareas, pero mostrando la información que otros ocultan."
+    />
+    <link rel="icon" href="assets/logo.svg" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500&family=Space+Grotesk:wght@500;700&display=swap"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <!-- capa de fondo fija: ECG vivo tras toda la pagina -->
+    <div class="ecg-bg" aria-hidden="true">
+      <svg class="ecg" viewBox="0 0 1500 300" preserveAspectRatio="none">
+        <defs>
+          <filter id="glow" x="-30%" y="-40%" width="160%" height="180%">
+            <feGaussianBlur stdDeviation="6" result="b" />
+            <feMerge>
+              <feMergeNode in="b" />
+              <feMergeNode in="SourceGraphic" />
+            </feMerge>
+          </filter>
+          <path id="trace"
+            d="M0,150 L40,150 Q55,132 70,150 L95,150 L103,161 L113,56 L123,190 L133,150 L165,150 Q195,116 225,150 L300,150 L340,150 Q355,132 370,150 L395,150 L403,161 L413,56 L423,190 L433,150 L465,150 Q495,116 525,150 L600,150 L640,150 Q655,132 670,150 L695,150 L703,161 L713,56 L723,190 L733,150 L765,150 Q795,116 825,150 L900,150 L940,150 Q955,132 970,150 L995,150 L1003,161 L1013,56 L1023,190 L1033,150 L1065,150 Q1095,116 1125,150 L1200,150 L1240,150 Q1255,132 1270,150 L1295,150 L1303,161 L1313,56 L1323,190 L1333,150 L1365,150 Q1395,116 1425,150 L1500,150" />
+        </defs>
+        <use class="ecg-base" href="#trace" />
+        <use class="ecg-flow f1" href="#trace" filter="url(#glow)" />
+        <use class="ecg-flow f2" href="#trace" filter="url(#glow)" />
+        <use class="ecg-flow f3" href="#trace" filter="url(#glow)" />
+      </svg>
+    </div>
+
+    <header class="nav">
+      <a class="brand" href="#top">
+        <img src="assets/logo.svg" alt="" width="30" height="30" />
+        <span>ResmonX</span>
+      </a>
+      <nav class="nav-links">
+        <a href="#features" data-i18n="nav_features">Características</a>
+        <a href="#install" data-i18n="nav_install">Instalación</a>
+        <a class="nav-gh" href="https://github.com/Zierchz/ResmonX" target="_blank" rel="noopener">GitHub</a>
+        <span class="lang" role="group" aria-label="Language / Idioma">
+          <button class="lang-btn" type="button" data-lang="es">ES</button>
+          <button class="lang-btn" type="button" data-lang="en">EN</button>
+        </span>
+      </nav>
+    </header>
+
+    <main id="top">
+      <section class="hero">
+        <div class="hero-inner">
+          <p class="eyebrow reveal" data-i18n="hero_eyebrow">Monitor de recursos · Windows</p>
+          <div class="logo-wrap reveal">
+            <img class="hero-logo" src="assets/logo.svg" alt="Logo de ResmonX" width="132" height="132" />
+          </div>
+          <h1 class="reveal">ResmonX</h1>
+          <p class="lead reveal" data-i18n="hero_lead">El pulso de tu PC, en tiempo real.</p>
+          <p class="tagline reveal" data-i18n="hero_tagline">
+            Un monitor de recursos ligero y honesto, con el estilo del Administrador de tareas — pero mostrando lo que otros ocultan.
+          </p>
+          <div class="cta reveal">
+            <a class="btn btn-primary" data-i18n="cta_download" href="https://github.com/Zierchz/ResmonX/releases/latest/download/ResmonX-Setup.exe" download>
+              Descargar para Windows
+            </a>
+            <a class="btn btn-ghost" data-i18n="cta_code" href="https://github.com/Zierchz/ResmonX" target="_blank" rel="noopener">
+              Ver el código
+            </a>
+          </div>
+          <p class="meta reveal" data-i18n="hero_meta">Windows 10 / 11 &nbsp;·&nbsp; MIT &nbsp;·&nbsp; ~2&nbsp;MB &nbsp;·&nbsp; sin telemetría</p>
+        </div>
+      </section>
+
+      <div class="rule" aria-hidden="true">
+        <svg viewBox="0 0 240 40" preserveAspectRatio="xMidYMid meet">
+          <path d="M0,20 L96,20 L104,20 L110,6 L118,34 L126,20 L134,20 L240,20"
+            fill="none" stroke="currentColor" stroke-width="1.5"
+            stroke-linecap="round" stroke-linejoin="round" />
+        </svg>
+      </div>
+
+      <section id="features" class="section">
+        <p class="eyebrow center reveal" data-i18n="feat_eyebrow">Qué muestra</p>
+        <h2 class="reveal" data-i18n="feat_title">Todo lo que ves, y lo que otros esconden</h2>
+        <div class="grid">
+          <article class="card reveal">
+            <span class="tag" data-i18n="c1_tag">7 vistas</span>
+            <h3 data-i18n="c1_h">Todo el sistema, de un vistazo</h3>
+            <p data-i18n="c1_p">Resumen, CPU, memoria, disco, red, procesos y GPU. La misma información que el Monitor de recursos, ordenada para leerse.</p>
+          </article>
+          <article class="card reveal">
+            <span class="tag" data-i18n="c2_tag">etw</span>
+            <h3 data-i18n="c2_h">Red por proceso, disco por archivo</h3>
+            <p data-i18n="c2_p">Qué proceso usa la red y qué archivo se lee o escribe, en tiempo real, con trazas ETW del kernel.</p>
+          </article>
+          <article class="card reveal">
+            <span class="tag" data-i18n="c3_tag">acciones</span>
+            <h3 data-i18n="c3_h">Control con clic derecho</h3>
+            <p data-i18n="c3_p">Finaliza, finaliza el árbol, suspende o reanuda un proceso; abre su ubicación o copia su ruta.</p>
+          </article>
+          <article class="card reveal">
+            <span class="tag" data-i18n="c4_tag">orden</span>
+            <h3 data-i18n="c4_h">Tablas que responden</h3>
+            <p data-i18n="c4_p">Ordena cualquier columna con un clic y un mapa de calor resalta al instante lo que consume tus recursos.</p>
+          </article>
+          <article class="card reveal">
+            <span class="tag" data-i18n="c5_tag">ligero</span>
+            <h3 data-i18n="c5_h">Pesa lo que debe pesar</h3>
+            <p data-i18n="c5_p">Hecho con Tauri (Rust + WebView2). Sin navegador empaquetado: el instalador ronda los dos megas.</p>
+          </article>
+          <article class="card reveal">
+            <span class="tag" data-i18n="c6_tag">honesto</span>
+            <h3 data-i18n="c6_h">Sin cuentas, sin telemetría</h3>
+            <p data-i18n="c6_p">No recoge datos ni oculta procesos. Código abierto con licencia MIT que puedes leer entero.</p>
+          </article>
+        </div>
+      </section>
+
+      <section id="install" class="section install">
+        <p class="eyebrow center reveal" data-i18n="inst_eyebrow">Instalación</p>
+        <h2 class="reveal" data-i18n="inst_title">Listo en tres pasos</h2>
+        <ol class="steps">
+          <li class="reveal">
+            <span class="step-n">01</span>
+            <span data-i18n="step1">Descarga el instalador desde la <a href="https://github.com/Zierchz/ResmonX/releases/latest" target="_blank" rel="noopener">última versión</a>.</span>
+          </li>
+          <li class="reveal">
+            <span class="step-n">02</span>
+            <span data-i18n="step2">Ejecuta <code>ResmonX-Setup.exe</code>. Se instala en tu usuario, sin permisos de administrador.</span>
+          </li>
+          <li class="reveal">
+            <span class="step-n">03</span>
+            <span data-i18n="step3">Abre ResmonX. Pedirá elevación para activar la red por proceso y el disco por archivo (ETW).</span>
+          </li>
+        </ol>
+        <p class="note reveal" data-i18n="note">
+          Como todavía no está firmado con un certificado de código, Windows puede mostrar un aviso de
+          SmartScreen la primera vez. Continúa con <em>Más información → Ejecutar de todas formas</em>.
+        </p>
+        <p class="req reveal" data-i18n="req">Requisitos: Windows 10 u 11. GPU: métricas solo en tarjetas NVIDIA.</p>
+      </section>
+    </main>
+
+    <footer class="footer">
+      <span data-i18n="footer_left">ResmonX · Licencia MIT</span>
+      <a href="https://github.com/Zierchz/ResmonX" target="_blank" rel="noopener">github.com/Zierchz/ResmonX</a>
+    </footer>
+
+    <script>
+      // diccionario de traducciones (ES / EN)
+      const I18N = {
+        es: {
+          title: "ResmonX — Monitor de recursos para Windows",
+          meta_desc:
+            "ResmonX es un monitor de recursos para Windows: ligero, honesto y con el estilo del Administrador de tareas, pero mostrando la información que otros ocultan.",
+          hero_logo_alt: "Logo de ResmonX",
+          nav_features: "Características",
+          nav_install: "Instalación",
+          hero_eyebrow: "Monitor de recursos · Windows",
+          hero_lead: "El pulso de tu PC, en tiempo real.",
+          hero_tagline:
+            "Un monitor de recursos ligero y honesto, con el estilo del Administrador de tareas — pero mostrando lo que otros ocultan.",
+          cta_download: "Descargar para Windows",
+          cta_code: "Ver el código",
+          hero_meta: "Windows 10 / 11 &nbsp;·&nbsp; MIT &nbsp;·&nbsp; ~2&nbsp;MB &nbsp;·&nbsp; sin telemetría",
+          feat_eyebrow: "Qué muestra",
+          feat_title: "Todo lo que ves, y lo que otros esconden",
+          c1_tag: "7 vistas",
+          c1_h: "Todo el sistema, de un vistazo",
+          c1_p: "Resumen, CPU, memoria, disco, red, procesos y GPU. La misma información que el Monitor de recursos, ordenada para leerse.",
+          c2_tag: "etw",
+          c2_h: "Red por proceso, disco por archivo",
+          c2_p: "Qué proceso usa la red y qué archivo se lee o escribe, en tiempo real, con trazas ETW del kernel.",
+          c3_tag: "acciones",
+          c3_h: "Control con clic derecho",
+          c3_p: "Finaliza, finaliza el árbol, suspende o reanuda un proceso; abre su ubicación o copia su ruta.",
+          c4_tag: "orden",
+          c4_h: "Tablas que responden",
+          c4_p: "Ordena cualquier columna con un clic y un mapa de calor resalta al instante lo que consume tus recursos.",
+          c5_tag: "ligero",
+          c5_h: "Pesa lo que debe pesar",
+          c5_p: "Hecho con Tauri (Rust + WebView2). Sin navegador empaquetado: el instalador ronda los dos megas.",
+          c6_tag: "honesto",
+          c6_h: "Sin cuentas, sin telemetría",
+          c6_p: "No recoge datos ni oculta procesos. Código abierto con licencia MIT que puedes leer entero.",
+          inst_eyebrow: "Instalación",
+          inst_title: "Listo en tres pasos",
+          step1:
+            'Descarga el instalador desde la <a href="https://github.com/Zierchz/ResmonX/releases/latest" target="_blank" rel="noopener">última versión</a>.',
+          step2:
+            'Ejecuta <code>ResmonX-Setup.exe</code>. Se instala en tu usuario, sin permisos de administrador.',
+          step3: "Abre ResmonX. Pedirá elevación para activar la red por proceso y el disco por archivo (ETW).",
+          note: 'Como todavía no está firmado con un certificado de código, Windows puede mostrar un aviso de SmartScreen la primera vez. Continúa con <em>Más información → Ejecutar de todas formas</em>.',
+          req: "Requisitos: Windows 10 u 11. GPU: métricas solo en tarjetas NVIDIA.",
+          footer_left: "ResmonX · Licencia MIT",
+        },
+        en: {
+          title: "ResmonX — Resource monitor for Windows",
+          meta_desc:
+            "ResmonX is a resource monitor for Windows: lightweight, honest, and Task Manager–styled, but showing the information others hide.",
+          hero_logo_alt: "ResmonX logo",
+          nav_features: "Features",
+          nav_install: "Install",
+          hero_eyebrow: "Resource monitor · Windows",
+          hero_lead: "Your PC's pulse, in real time.",
+          hero_tagline:
+            "A lightweight, honest resource monitor with the look of Task Manager — but showing what others hide.",
+          cta_download: "Download for Windows",
+          cta_code: "View the code",
+          hero_meta: "Windows 10 / 11 &nbsp;·&nbsp; MIT &nbsp;·&nbsp; ~2&nbsp;MB &nbsp;·&nbsp; no telemetry",
+          feat_eyebrow: "What it shows",
+          feat_title: "Everything you see — and what others hide",
+          c1_tag: "7 views",
+          c1_h: "The whole system, at a glance",
+          c1_p: "Overview, CPU, memory, disk, network, processes and GPU. The same data as Resource Monitor, laid out to be read.",
+          c2_tag: "etw",
+          c2_h: "Network per process, disk per file",
+          c2_p: "Which process uses the network and which file is read or written, in real time, via kernel ETW traces.",
+          c3_tag: "actions",
+          c3_h: "Right-click control",
+          c3_p: "End, end tree, suspend or resume a process; open its location or copy its path.",
+          c4_tag: "sort",
+          c4_h: "Tables that respond",
+          c4_p: "Sort any column with a click, and a heatmap instantly highlights what's eating your resources.",
+          c5_tag: "light",
+          c5_h: "As small as it should be",
+          c5_p: "Built with Tauri (Rust + WebView2). No bundled browser: the installer is around two megabytes.",
+          c6_tag: "honest",
+          c6_h: "No accounts, no telemetry",
+          c6_p: "It collects no data and hides no processes. Open source under the MIT license, readable in full.",
+          inst_eyebrow: "Install",
+          inst_title: "Ready in three steps",
+          step1:
+            'Download the installer from the <a href="https://github.com/Zierchz/ResmonX/releases/latest" target="_blank" rel="noopener">latest release</a>.',
+          step2:
+            'Run <code>ResmonX-Setup.exe</code>. It installs per user, with no administrator rights.',
+          step3: "Open ResmonX. It will request elevation to enable per-process network and per-file disk activity (ETW).",
+          note: "Since it isn't code-signed yet, Windows may show a SmartScreen prompt the first time. Continue with <em>More info → Run anyway</em>.",
+          req: "Requirements: Windows 10 or 11. GPU: metrics on NVIDIA cards only.",
+          footer_left: "ResmonX · MIT License",
+        },
+      };
+
+      // aplica un idioma a toda la pagina
+      function applyLang(lang) {
+        const dict = I18N[lang] || I18N.en;
+        document.documentElement.lang = lang;
+        document.title = dict.title;
+        const md = document.querySelector('meta[name="description"]');
+        if (md) md.setAttribute("content", dict.meta_desc);
+        const logo = document.querySelector(".hero-logo");
+        if (logo) logo.alt = dict.hero_logo_alt;
+        document.querySelectorAll("[data-i18n]").forEach((el) => {
+          const v = dict[el.getAttribute("data-i18n")];
+          if (v != null) el.innerHTML = v;
+        });
+        document.querySelectorAll(".lang-btn").forEach((b) => {
+          const on = b.dataset.lang === lang;
+          b.classList.toggle("active", on);
+          b.setAttribute("aria-pressed", String(on));
+        });
+        try {
+          localStorage.setItem("resmonx-lang", lang);
+        } catch (e) {}
+      }
+
+      // idioma inicial: elección guardada o el del navegador
+      let saved = null;
+      try {
+        saved = localStorage.getItem("resmonx-lang");
+      } catch (e) {}
+      const initial = saved || ((navigator.language || "en").toLowerCase().startsWith("es") ? "es" : "en");
+      document.querySelectorAll(".lang-btn").forEach((b) =>
+        b.addEventListener("click", () => applyLang(b.dataset.lang))
+      );
+      applyLang(initial);
+
+      // realce progresivo: sin JS, el contenido se ve igual
+      document.documentElement.classList.add("js");
+      const io = new IntersectionObserver(
+        (entries) => {
+          for (const e of entries) {
+            if (e.isIntersecting) {
+              e.target.classList.add("in");
+              io.unobserve(e.target);
+            }
+          }
+        },
+        { threshold: 0.15 }
+      );
+      document.querySelectorAll(".reveal").forEach((el) => io.observe(el));
+    </script>
+  </body>
+</html>
