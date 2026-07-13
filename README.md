@@ -4,6 +4,8 @@ A modern resource monitor for Windows — a lightweight alternative to Resource 
 
 ResmonX polls the system about twice per second and renders live CPU, memory, disk, network and GPU metrics with rolling-history sparklines, severity-colored readings, and sortable per-process and per-service tables.
 
+**Website:** https://zierchz.github.io/ResmonX/ — [download the latest installer](https://github.com/Zierchz/ResmonX/releases/latest/download/ResmonX-Setup.exe) (Windows 10/11).
+
 ## Features
 
 Seven tabs, each backed by a single snapshot pulled from the Rust backend. Every section uses a two-column layout: sticky summary cards on the left, detailed tables and grids on the right.
