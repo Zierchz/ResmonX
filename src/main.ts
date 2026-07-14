@@ -131,7 +131,6 @@ const history = {
   gpu: [] as number[],
   read: [] as number[],
   write: [] as number[],
-  faults: [] as number[],
 };
 
 let activeTab = "overview";
@@ -241,6 +240,12 @@ function heat(ratio: number): string {
   const r = Math.max(0, Math.min(1, ratio));
   if (r < 0.015) return "";
   return ` style="background:rgba(255,140,0,${(0.07 + 0.4 * r).toFixed(3)})"`;
+}
+
+// tono de azul según la carga del núcleo: apagado en reposo, brillante bajo carga
+function coreBlue(pct: number): string {
+  const p = Math.max(0, Math.min(100, pct)) / 100;
+  return `hsl(210 55% ${(34 + p * 34).toFixed(0)}%)`;
 }
 
 // iconos de procesos: cache por ruta + carga diferida vía backend
@@ -445,7 +450,7 @@ function renderCpu(s: Snapshot) {
     .map(
       (u, i) => `<div class="core-cell">
         <div class="core-label"><span>N${i}</span><span>${u.toFixed(0)}%</span></div>
-        <div class="core-track"><div class="core-fill ${sevClass(u)}" style="width:${Math.min(u, 100).toFixed(0)}%"></div></div>
+        <div class="core-track"><div class="core-fill" style="width:${Math.min(u, 100).toFixed(0)}%;background:${coreBlue(u)}"></div></div>
       </div>`,
     )
     .join("");
@@ -498,38 +503,41 @@ function renderMemory(s: Snapshot) {
 
   document.getElementById("mem-cards")!.innerHTML =
     memCard(s) +
-    card(
-      "Confirmada",
-      `${fmtBytes(m.commit)}`,
-      m.commit_limit ? `límite ${fmtBytes(m.commit_limit)} · ${((m.commit / m.commit_limit) * 100).toFixed(0)}%` : "",
-      "",
-      COLORS.mem,
-    ) +
-    card("En espera (caché)", fmtBytes(standby), `modificada ${fmtBytes(modified)}`, "", COLORS.mem) +
-    card(
-      "Fallos duros/s",
-      m.hard_faults_ps.toFixed(0),
-      "páginas leídas de disco por segundo",
-      sparkline(history.faults, Math.max(...history.faults, 10), COLORS.mem),
-      COLORS.mem,
-    );
+    card("En espera (caché)", fmtBytes(standby), `modificada ${fmtBytes(modified)}`, "", COLORS.mem);
 
+  // cálidos (naranjas del heatmap) = memoria consumida; fríos (azules de la app) = disponible
   const segs = [
-    { label: "En uso", value: used, color: "#ba68c8" },
-    { label: "Modificada", value: modified, color: "#ffb74d" },
-    { label: "En espera", value: standby, color: "#4fc3f7" },
-    { label: "Libre", value: free, color: "#37474f" },
+    { label: "En uso", value: used, color: "#e8843c" },
+    { label: "Modificada", value: modified, color: "#b3632a" },
+    { label: "En espera", value: standby, color: "#6d8db3" },
+    { label: "Libre", value: free, color: "#33445a" },
   ];
-  const bar = segs
-    .map((g) => `<div class="mem-seg" style="width:${((g.value / m.total) * 100).toFixed(2)}%;background:${g.color}"></div>`)
+  const usedPct = m.total > 0 ? (used / m.total) * 100 : 0;
+  let acc = 0;
+  const rings = segs
+    .map((g) => {
+      const frac = m.total > 0 ? (g.value / m.total) * 100 : 0;
+      // pathLength=100 => dasharray/offset en unidades de porcentaje
+      const seg = `<circle cx="60" cy="60" r="46" fill="none" stroke="${g.color}" stroke-width="15" pathLength="100" stroke-dasharray="${frac.toFixed(2)} ${(100 - frac).toFixed(2)}" stroke-dashoffset="${(-acc).toFixed(2)}"></circle>`;
+      acc += frac;
+      return seg;
+    })
     .join("");
   const legend = segs
     .map(
       (g) => `<span class="legend-item"><span class="dot" style="background:${g.color}"></span>${g.label} · ${fmtBytes(g.value)}</span>`,
     )
     .join("");
-  document.getElementById("mem-bar")!.innerHTML =
-    `<div class="mem-bar">${bar}</div><div class="legend">${legend}</div>`;
+  document.getElementById("mem-donut")!.innerHTML = `
+    <svg class="donut" viewBox="0 0 120 120">
+      <g transform="rotate(-90 60 60)">
+        <circle cx="60" cy="60" r="46" fill="none" stroke="var(--bg-hover)" stroke-width="15"></circle>
+        ${rings}
+      </g>
+      <text class="donut-val" x="60" y="58" text-anchor="middle">${usedPct.toFixed(0)}%</text>
+      <text class="donut-cap" x="60" y="74" text-anchor="middle">en uso</text>
+    </svg>
+    <div class="legend">${legend}</div>`;
 
   const rows = sortRows("mem-table", applyFilter(s.processes, "mem-filter"), { key: "memory", asc: false })
     .map(
@@ -922,7 +930,6 @@ async function tick() {
     push(history.gpu, s.gpu?.utilization ?? 0);
     push(history.read, s.processes.reduce((a, p) => a + p.read_bps, 0));
     push(history.write, s.processes.reduce((a, p) => a + p.write_bps, 0));
-    push(history.faults, s.memory.hard_faults_ps);
     render(s);
   } catch (e) {
     console.error("snapshot error", e);

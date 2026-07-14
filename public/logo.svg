@@ -1,0 +1,12 @@
+<svg width="1024" height="1024" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">
+  <!-- fondo negro mate, cuadrado redondeado -->
+  <rect x="96" y="96" width="832" height="832" rx="196" fill="#111214"/>
+  <!-- ECG continuo: latido, R grande y abierta (palo alto, bucle amplio, pierna en V), latido -->
+  <path
+    d="M 132 660 L 250 660 L 288 544 L 340 738 L 396 280
+       C 520 256 600 320 592 404
+       C 586 476 512 516 460 500
+       L 648 764 L 696 500 L 742 660 L 892 660"
+    fill="none" stroke="#79a6d8" stroke-width="36"
+    stroke-linecap="round" stroke-linejoin="round"/>
+</svg>

@@ -35,20 +35,23 @@ body {
 
 /* Panel de navegación lateral (estilo Task Manager Win11) */
 .sidebar {
-  width: 210px;
+  width: 64px;
   flex-shrink: 0;
+  position: relative;
+  z-index: 10;
   background: var(--bg-card);
   border-right: 1px solid var(--border);
   display: flex;
   flex-direction: column;
-  padding: 8px;
+  padding: 12px 6px 8px;
 }
 
-.brand {
-  font-size: 15px;
-  font-weight: 600;
-  color: var(--text);
-  padding: 12px 12px 14px;
+.nav-logo {
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  object-fit: contain;
+  display: block;
 }
 
 .nav {
@@ -61,16 +64,38 @@ body {
   position: relative;
   display: flex;
   align-items: center;
-  gap: 12px;
+  justify-content: center;
   background: none;
   border: none;
   color: var(--text-dim);
-  padding: 9px 12px;
-  border-radius: 5px;
+  padding: 11px 0;
+  border-radius: 7px;
   cursor: pointer;
-  font-size: 13px;
   font-family: inherit;
-  text-align: left;
+}
+
+/* label como tooltip al pasar el cursor */
+.nav-item > span {
+  position: absolute;
+  left: calc(100% + 12px);
+  top: 50%;
+  transform: translateY(-50%);
+  white-space: nowrap;
+  background: var(--bg-hover);
+  border: 1px solid var(--border);
+  color: var(--text);
+  padding: 5px 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.45);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.12s ease;
+  z-index: 50;
+}
+
+.nav-item:hover > span {
+  opacity: 1;
 }
 
 .nav-item svg {
@@ -107,15 +132,6 @@ body {
   background: var(--accent);
 }
 
-.sidebar-stats {
-  margin-top: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 12px;
-  border-top: 1px solid var(--border);
-}
-
 .stat {
   display: flex;
   align-items: center;
@@ -143,7 +159,17 @@ body {
 
 .topbar {
   flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
   padding: 14px 20px 10px;
+}
+
+.topbar-stats {
+  display: flex;
+  align-items: center;
+  gap: 18px;
 }
 
 .view-title {
@@ -208,7 +234,8 @@ body {
   min-width: 0;
 }
 
-.split-main > .section-title:first-child {
+.split-main > .section-title:first-child,
+.split-aside > .section-title:first-child {
   margin-top: 0;
 }
 
@@ -339,12 +366,17 @@ tbody td {
   font-variant-numeric: tabular-nums;
 }
 
+tbody tr {
+  transition: background 0.12s ease, box-shadow 0.12s ease;
+}
+
 tbody tr:nth-child(even) {
   background: rgba(255, 255, 255, 0.018);
 }
 
 tbody tr:hover {
-  background: var(--bg-hover);
+  background: color-mix(in srgb, var(--bg-hover) 78%, var(--accent));
+  box-shadow: inset 2px 0 0 var(--accent);
 }
 
 td.num {
@@ -386,7 +418,8 @@ img.pico:not([src]) {
 }
 
 /* separación cuando van tras un elemento fijo (núcleos, interfaces) */
-.subtabs:not(:first-child) {
+#core-grid + .subtabs,
+#nic-cards + .subtabs {
   margin-top: 20px;
 }
 
@@ -421,36 +454,36 @@ img.pico:not([src]) {
 
 .core-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(96px, 1fr));
-  gap: 8px;
+  grid-template-columns: repeat(auto-fill, minmax(124px, 1fr));
+  gap: 10px;
 }
 
 .core-cell {
   background: var(--bg-card);
   border: 1px solid var(--border);
-  border-radius: 8px;
-  padding: 8px 10px;
+  border-radius: 10px;
+  padding: 12px 14px;
 }
 
 .core-label {
   display: flex;
   justify-content: space-between;
-  font-size: 11px;
+  font-size: 12px;
   color: var(--text-dim);
-  margin-bottom: 6px;
+  margin-bottom: 9px;
   font-variant-numeric: tabular-nums;
 }
 
 .core-track {
-  height: 6px;
-  border-radius: 3px;
+  height: 8px;
+  border-radius: 4px;
   background: var(--bg-hover);
   overflow: hidden;
 }
 
 .core-fill {
   height: 100%;
-  border-radius: 3px;
+  border-radius: 4px;
   background: var(--accent);
   transition: width 0.3s ease, background 0.3s ease;
 }
@@ -473,17 +506,43 @@ img.pico:not([src]) {
   padding: 14px 16px;
 }
 
-.mem-bar {
+/* gráfico circular de distribución de memoria (bajo las cards) */
+.donut-panel {
+  margin-top: 12px;
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  padding: 16px;
   display: flex;
-  height: 26px;
-  border-radius: 6px;
-  overflow: hidden;
-  background: var(--bg-hover);
-  margin-bottom: 10px;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
 }
 
-.mem-seg {
-  min-width: 0;
+.donut {
+  width: 150px;
+  height: 150px;
+  flex-shrink: 0;
+}
+
+.donut-val {
+  fill: var(--text);
+  font-size: 24px;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+.donut-cap {
+  fill: var(--text-dim);
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.donut-panel .legend {
+  flex-direction: column;
+  gap: 7px;
+  align-self: stretch;
 }
 
 .legend {
