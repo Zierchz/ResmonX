@@ -25,6 +25,11 @@ pub fn run() {
         return;
     }
 
+    // Auto-sana: quita una capa RUNASADMIN obsoleta de nuestro .exe (de una
+    // versión antigua que se elevaba), que forzaría a la ventana a integridad
+    // alta y Modo Objetivo no la iluminaría. Surte efecto en el próximo arranque.
+    ipc::clear_own_runasadmin_layer();
+
     // Modo UI. Si ya estamos elevados (p. ej. dev en terminal admin), se
     // monitorea en proceso. Si no, se lanza el ayudante elevado y se habla por
     // el pipe; si el usuario cancela el UAC, cae a local sin elevar (sin ETW).

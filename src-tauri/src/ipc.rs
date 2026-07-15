@@ -27,6 +27,9 @@ use windows::Win32::System::Pipes::{
     GetNamedPipeServerProcessId, PIPE_READMODE_BYTE, PIPE_REJECT_REMOTE_CLIENTS, PIPE_TYPE_BYTE,
     PIPE_WAIT,
 };
+use windows::Win32::System::Registry::{
+    RegCloseKey, RegDeleteValueW, RegOpenKeyExW, HKEY, HKEY_CURRENT_USER, KEY_SET_VALUE,
+};
 use windows::Win32::System::Threading::{
     GetCurrentProcess, GetProcessId, OpenProcess, OpenProcessToken, WaitForSingleObject, INFINITE,
     PROCESS_SYNCHRONIZE,
@@ -85,6 +88,32 @@ pub fn gen_pipe_name() -> String {
         r"\\.\pipe\resmonx-{:08x}{:04x}{:04x}{tail}",
         guid.data1, guid.data2, guid.data3
     )
+}
+
+/// Quita la capa de compatibilidad RUNASADMIN de nuestro propio .exe si quedó
+/// de una versión antigua que se elevaba: fuerza a correr elevado e impide que
+/// Modo Objetivo ilumine la ventana. El efecto surte en el próximo arranque.
+pub fn clear_own_runasadmin_layer() {
+    let Ok(exe) = std::env::current_exe() else {
+        return;
+    };
+    let exe_w = to_wide(&exe.to_string_lossy());
+    let subkey = to_wide(r"Software\Microsoft\Windows NT\CurrentVersion\AppCompatFlags\Layers");
+    unsafe {
+        let mut hkey = HKEY::default();
+        if RegOpenKeyExW(
+            HKEY_CURRENT_USER,
+            PCWSTR(subkey.as_ptr()),
+            Some(0),
+            KEY_SET_VALUE,
+            &mut hkey,
+        )
+        .is_ok()
+        {
+            let _ = RegDeleteValueW(hkey, PCWSTR(exe_w.as_ptr()));
+            let _ = RegCloseKey(hkey);
+        }
+    }
 }
 
 pub enum SpawnErr {
