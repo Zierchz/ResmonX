@@ -34,7 +34,7 @@ pub fn collect() -> Vec<ServiceSnapshot> {
         let mut needed = 0u32;
         let mut count = 0u32;
         let mut resume = 0u32;
-        // primera llamada solo para conocer el tamaño del buffer
+        // first call just to learn the buffer size
         let _ = EnumServicesStatusExW(
             scm,
             SC_ENUM_PROCESS_INFO,

@@ -1,16 +1,16 @@
-// Working set por PID vía NtQuerySystemInformation.
-// sysinfo no puede leer la memoria de ciertos procesos protegidos (p.ej. vmmemWSL, la VM de WSL2)
-// y devuelve 0; esta consulta a nivel de sistema sí los reporta, como el Administrador de tareas.
+// Working set per PID via NtQuerySystemInformation.
+// sysinfo can't read the memory of certain protected processes (e.g. vmmemWSL, the WSL2 VM)
+// and returns 0; this system-level query does report them, like Task Manager.
 use std::collections::HashMap;
 use windows::Wdk::System::SystemInformation::{NtQuerySystemInformation, SystemProcessInformation};
 use windows::Win32::Foundation::STATUS_INFO_LENGTH_MISMATCH;
 use windows::Win32::System::WindowsProgramming::SYSTEM_PROCESS_INFORMATION;
 
-// mapa pid -> working set en bytes
+// pid -> working set in bytes map
 pub fn working_sets() -> HashMap<u32, u64> {
     let mut map = HashMap::new();
     unsafe {
-        // primera llamada para conocer el tamaño necesario
+        // first call to learn the needed size
         let mut len = 0u32;
         let _ = NtQuerySystemInformation(SystemProcessInformation, std::ptr::null_mut(), 0, &mut len);
 
@@ -22,7 +22,7 @@ pub fn working_sets() -> HashMap<u32, u64> {
                 buf.len() as u32,
                 &mut len,
             );
-            // el conjunto de procesos crecio entre llamadas: agranda y reintenta
+            // the process set grew between calls: enlarge and retry
             if st == STATUS_INFO_LENGTH_MISMATCH {
                 buf = vec![0u8; len as usize + 65536];
                 continue;
@@ -33,7 +33,7 @@ pub fn working_sets() -> HashMap<u32, u64> {
             break;
         }
 
-        // lista enlazada de SYSTEM_PROCESS_INFORMATION vía NextEntryOffset
+        // linked list of SYSTEM_PROCESS_INFORMATION via NextEntryOffset
         let stride = std::mem::size_of::<SYSTEM_PROCESS_INFORMATION>();
         let mut off = 0usize;
         while off + stride <= buf.len() {

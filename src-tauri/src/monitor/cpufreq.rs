@@ -4,16 +4,16 @@ use windows::Win32::System::Performance::{
     PDH_FMT_COUNTERVALUE, PDH_FMT_DOUBLE, PDH_HCOUNTER, PDH_HQUERY,
 };
 
-/// Contador PDH "% Processor Performance" (100 = frecuencia base).
-/// Se usa la variante English para que funcione en Windows localizados.
+/// PDH counter "% Processor Performance" (100 = base frequency).
+/// The English variant is used so it works on localized Windows.
 pub struct CpuFreq {
     query: PDH_HQUERY,
     counter: PDH_HCOUNTER,
     ok: bool,
 }
 
-// Los handles PDH pueden usarse desde otro thread si las llamadas no son concurrentes;
-// el Mutex del estado garantiza eso.
+// PDH handles can be used from another thread if the calls aren't concurrent;
+// the state Mutex guarantees that.
 unsafe impl Send for CpuFreq {}
 
 impl CpuFreq {
@@ -28,7 +28,7 @@ impl CpuFreq {
             if PdhAddEnglishCounterW(query, path, 0, &mut counter) != 0 {
                 return Self { query, counter, ok: false };
             }
-            // primera recogida: los contadores de tasa necesitan dos muestras
+            // first collect: rate counters need two samples
             PdhCollectQueryData(query);
             Self { query, counter, ok: true }
         }

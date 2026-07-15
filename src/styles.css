@@ -1,5 +1,5 @@
 :root {
-  /* paleta estilo Administrador de tareas de Windows 11 (dark) */
+  /* Windows 11 Task Manager style palette (dark) */
   --bg: #1c1c1c;
   --bg-card: #272727;
   --bg-hover: #323232;
@@ -8,7 +8,7 @@
   --text-dim: #9d9d9d;
   --accent: #6d8db3;
 
-  /* color por severidad: la lectura dice su propio estado */
+  /* color by severity: the readout states its own status */
   --ok: #66bb6a;
   --warn: #ffa726;
   --crit: #ef5350;
@@ -33,7 +33,7 @@ body {
   overflow: hidden;
 }
 
-/* Panel de navegación lateral (estilo Task Manager Win11) */
+/* Side navigation panel (Task Manager Win11 style) */
 .sidebar {
   width: 64px;
   flex-shrink: 0;
@@ -74,7 +74,7 @@ body {
   font-family: inherit;
 }
 
-/* label como tooltip al pasar el cursor */
+/* label as tooltip on hover */
 .nav-item > span {
   position: absolute;
   left: calc(100% + 12px);
@@ -119,7 +119,7 @@ body {
   color: var(--text);
 }
 
-/* indicador de barra vertical del item activo (Win11) */
+/* vertical bar indicator for the active item (Win11) */
 .nav-item.active::before {
   content: "";
   position: absolute;
@@ -409,7 +409,7 @@ img.pico:not([src]) {
   font-weight: 600;
 }
 
-/* sub-tabs: una tabla a la vez dentro de una sección */
+/* sub-tabs: one table at a time within a section */
 .subtabs {
   display: flex;
   gap: 4px;
@@ -417,7 +417,7 @@ img.pico:not([src]) {
   border-bottom: 1px solid var(--border);
 }
 
-/* separación cuando van tras un elemento fijo (núcleos, interfaces) */
+/* spacing when they follow a fixed element (cores, interfaces) */
 #core-grid + .subtabs,
 #nic-cards + .subtabs {
   margin-top: 20px;
@@ -488,7 +488,7 @@ img.pico:not([src]) {
   transition: width 0.3s ease, background 0.3s ease;
 }
 
-/* severidad: la barra dice su propio nivel */
+/* severity: the bar states its own level */
 .sev-ok {
   background: var(--ok);
 }
@@ -506,7 +506,7 @@ img.pico:not([src]) {
   padding: 14px 16px;
 }
 
-/* gráfico circular de distribución de memoria (bajo las cards) */
+/* memory distribution donut chart (below the cards) */
 .donut-panel {
   margin-top: 12px;
   background: var(--bg-card);

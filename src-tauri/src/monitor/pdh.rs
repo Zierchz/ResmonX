@@ -4,7 +4,7 @@ use windows::Win32::System::Performance::{
     PDH_FMT_COUNTERVALUE, PDH_FMT_DOUBLE, PDH_HCOUNTER, PDH_HQUERY,
 };
 
-/// Contadores PDH de memoria y por disco lógico (nombres English).
+/// PDH counters for memory and per logical disk (English names).
 pub struct SysCounters {
     query: PDH_HQUERY,
     ok: bool,
@@ -14,11 +14,11 @@ pub struct SysCounters {
     hard_faults: PDH_HCOUNTER,
     committed: PDH_HCOUNTER,
     commit_limit: PDH_HCOUNTER,
-    // (instancia, % tiempo activo, cola actual)
+    // (instance, % active time, current queue)
     disks: Vec<(String, PDH_HCOUNTER, PDH_HCOUNTER)>,
 }
 
-// Ver nota de Send en cpufreq.rs: el Mutex del estado serializa las llamadas.
+// See the Send note in cpufreq.rs: the state Mutex serializes the calls.
 unsafe impl Send for SysCounters {}
 
 pub struct MemCounters {
@@ -40,7 +40,7 @@ fn add(query: PDH_HQUERY, path: &str) -> PDH_HCOUNTER {
 }
 
 impl SysCounters {
-    /// `disk_instances`: unidades lógicas tipo "C:".
+    /// `disk_instances`: logical drives like "C:".
     pub fn new(disk_instances: &[String]) -> Self {
         unsafe {
             let mut query = PDH_HQUERY::default();
@@ -76,7 +76,7 @@ impl SysCounters {
                     add(query, &format!("\\LogicalDisk({inst})\\Current Disk Queue Length")),
                 ));
             }
-            // primera muestra para los contadores de tasa
+            // first sample for the rate counters
             PdhCollectQueryData(query);
             s
         }
@@ -102,7 +102,7 @@ impl SysCounters {
         }
     }
 
-    /// Leer tras collect().
+    /// Read after collect().
     pub fn memory(&self) -> MemCounters {
         let standby = self
             .standby
@@ -119,7 +119,7 @@ impl SysCounters {
         }
     }
 
-    /// (% activo, cola) de una unidad, tras collect().
+    /// (% active, queue) of a drive, after collect().
     pub fn disk(&self, instance: &str) -> (f64, f64) {
         for (inst, active, queue) in &self.disks {
             if inst == instance {

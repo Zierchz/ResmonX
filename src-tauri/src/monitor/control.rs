@@ -9,7 +9,7 @@ use windows::Win32::System::Threading::{
     THREAD_SUSPEND_RESUME,
 };
 
-/// Mapa hijo->padre de todos los procesos (Toolhelp).
+/// Child->parent map of all processes (Toolhelp).
 fn parent_map() -> HashMap<u32, u32> {
     let mut map = HashMap::new();
     unsafe {
@@ -33,11 +33,11 @@ fn parent_map() -> HashMap<u32, u32> {
     map
 }
 
-/// Descendientes de `root` (sin incluirlo).
+/// Descendants of `root` (excluding it).
 fn descendants(root: u32) -> Vec<u32> {
     let parents = parent_map();
     let mut out = Vec::new();
-    // recorrido en anchura evitando ciclos por reciclado de PIDs
+    // breadth-first traversal avoiding cycles from PID recycling
     let mut frontier = vec![root];
     while let Some(pid) = frontier.pop() {
         for (&child, &parent) in &parents {
@@ -63,7 +63,7 @@ fn terminate(pid: u32) -> Result<(), String> {
     }
 }
 
-/// Suspende o reanuda todos los hilos de un proceso.
+/// Suspends or resumes all threads of a process.
 fn set_suspended(pid: u32, suspend: bool) -> Result<(), String> {
     if pid == 0 {
         return Err("PID inválido".into());
@@ -107,7 +107,7 @@ pub fn kill_process(pid: u32) -> Result<(), String> {
 }
 
 pub fn kill_process_tree(pid: u32) -> Result<(), String> {
-    // hijos primero, raíz al final
+    // children first, root last
     for child in descendants(pid) {
         let _ = terminate(child);
     }

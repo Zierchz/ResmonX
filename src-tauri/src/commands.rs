@@ -1,5 +1,5 @@
-// Capa de comandos Tauri. Despacha al backend local (monitoreo en proceso,
-// cuando ya estamos elevados) o al remoto (ayudante elevado por pipe).
+// Tauri command layer. Dispatches to the local backend (monitor in-process,
+// when already elevated) or the remote one (elevated helper over the pipe).
 use crate::ipc::PipeClient;
 use crate::monitor::MonitorState;
 use serde_json::Value;

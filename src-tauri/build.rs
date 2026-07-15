@@ -1,6 +1,6 @@
-// Manifest de la app. La ventana corre SIN elevar (asInvoker) para que Modo
-// Objetivo de ASUS OLED Care la ilumine; la elevación la pide en runtime el
-// ayudante (ver src/ipc.rs). Mantiene DPI awareness y common controls.
+// App manifest. The window runs unelevated (asInvoker) so ASUS OLED Care
+// "Target Mode" lights it; elevation is requested at runtime by the helper
+// (see src/ipc.rs). Keeps DPI awareness and common controls.
 const APP_MANIFEST: &str = r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0">
   <dependency>

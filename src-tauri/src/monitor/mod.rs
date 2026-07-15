@@ -116,7 +116,7 @@ struct Inner {
     last: Instant,
 }
 
-/// "C:\" -> "C:" (instancia PDH de LogicalDisk).
+/// "C:\" -> "C:" (PDH LogicalDisk instance).
 fn disk_instance(mount: &str) -> String {
     mount.trim_end_matches('\\').to_string()
 }
@@ -159,7 +159,7 @@ impl MonitorState {
     inner.disks.refresh(true);
     inner.counters.collect();
     let thread_map = threads::thread_counts();
-    // working set fiable por pid (sysinfo devuelve 0 para procesos como vmmemWSL)
+    // reliable working set by pid (sysinfo returns 0 for processes like vmmemWSL)
     let ws_map = procmem::working_sets();
 
     let cores = inner.sys.cpus().len().max(1);
@@ -207,7 +207,7 @@ impl MonitorState {
         .map(|p| {
             let du = p.disk_usage();
             let pid = p.pid().as_u32();
-            // si sysinfo no pudo leer la memoria (0), usa el working set del sistema
+            // if sysinfo couldn't read the memory (0), use the system working set
             let mem = p.memory();
             let memory = if mem == 0 { ws_map.get(&pid).copied().unwrap_or(0) } else { mem };
             ProcessSnapshot {

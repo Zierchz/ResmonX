@@ -1,5 +1,5 @@
-// Split UI/ayudante: la ventana corre sin elevar (para que Modo Objetivo de
-// ASUS la ilumine) y un ayudante elevado hace el monitoreo por un named pipe.
+// UI/helper split: the window runs unelevated (so ASUS "Target Mode" keeps it
+// lit) while an elevated helper does the monitoring over a named pipe.
 use crate::monitor::{control, icons, MonitorState};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -37,7 +37,7 @@ use windows::Win32::System::Threading::{
 use windows::Win32::UI::Shell::{ShellExecuteExW, SEE_MASK_NOCLOSEPROCESS, SHELLEXECUTEINFOW};
 use windows::Win32::UI::WindowsAndMessaging::SW_HIDE;
 
-// Protocolo del pipe: una petición y una respuesta por línea (JSON compacto).
+// Pipe protocol: one request and one response per line (compact JSON).
 #[derive(Serialize, Deserialize)]
 enum Req {
     Snapshot,
@@ -59,7 +59,7 @@ fn to_wide(s: &str) -> Vec<u16> {
     s.encode_utf16().chain(std::iter::once(0)).collect()
 }
 
-/// True si el proceso actual está elevado (token con elevación).
+/// True if the current process is elevated (token has elevation).
 pub fn is_elevated() -> bool {
     unsafe {
         let mut token = HANDLE::default();
@@ -80,7 +80,7 @@ pub fn is_elevated() -> bool {
     }
 }
 
-/// Nombre de pipe aleatorio (GUID criptográfico) para que no sea predecible.
+/// Random pipe name (cryptographic GUID) so it isn't predictable.
 pub fn gen_pipe_name() -> String {
     let guid = unsafe { CoCreateGuid() }.unwrap_or_else(|_| GUID::zeroed());
     let tail: String = guid.data4.iter().map(|b| format!("{b:02x}")).collect();
@@ -90,9 +90,9 @@ pub fn gen_pipe_name() -> String {
     )
 }
 
-/// Quita la capa de compatibilidad RUNASADMIN de nuestro propio .exe si quedó
-/// de una versión antigua que se elevaba: fuerza a correr elevado e impide que
-/// Modo Objetivo ilumine la ventana. El efecto surte en el próximo arranque.
+/// Removes the RUNASADMIN compatibility layer from our own .exe if left over
+/// from an old version that self-elevated: it forces elevation and stops Target
+/// Mode from lighting the window. Takes effect on the next launch.
 pub fn clear_own_runasadmin_layer() {
     let Ok(exe) = std::env::current_exe() else {
         return;
@@ -121,16 +121,16 @@ pub enum SpawnErr {
     Other,
 }
 
-/// Relanza este mismo .exe como ayudante elevado (dispara UAC). Le pasa el PID
-/// de la UI para que solo acepte a ese cliente. Devuelve el PID del ayudante.
+/// Relaunches this same .exe as an elevated helper (triggers UAC). Passes the
+/// UI PID so it only accepts that client. Returns the helper PID.
 pub fn spawn_helper_elevated(pipe: &str, parent_pid: u32) -> Result<u32, SpawnErr> {
     let exe = std::env::current_exe().map_err(|_| SpawnErr::Other)?;
     let exe_w = to_wide(&exe.to_string_lossy());
     let verb_w = to_wide("runas");
     let params_w = to_wide(&format!("--helper --pipe {pipe} --parent {parent_pid}"));
     unsafe {
-        // ShellExecuteEx puede delegar en extensiones COM del shell; COM aún no
-        // está inicializado a esta altura. STA es lo que WebView2 querrá luego.
+        // ShellExecuteEx may delegate to COM shell extensions; COM isn't
+        // initialized yet at this point. STA is what WebView2 will want later.
         let _ = CoInitializeEx(None, COINIT_APARTMENTTHREADED);
         let mut sei = SHELLEXECUTEINFOW {
             cbSize: std::mem::size_of::<SHELLEXECUTEINFOW>() as u32,
@@ -147,7 +147,7 @@ pub fn spawn_helper_elevated(pipe: &str, parent_pid: u32) -> Result<u32, SpawnEr
                 let _ = CloseHandle(sei.hProcess);
                 Ok(pid)
             }
-            // 1223 = el usuario canceló el UAC
+            // 1223 = user cancelled the UAC prompt
             Err(e) if e.code().0 as u32 & 0xFFFF == 1223 => Err(SpawnErr::Cancelled),
             Err(_) => Err(SpawnErr::Other),
         }
@@ -155,15 +155,15 @@ pub fn spawn_helper_elevated(pipe: &str, parent_pid: u32) -> Result<u32, SpawnEr
 }
 
 // ---------------------------------------------------------------------------
-// Cliente (proceso UI, sin elevar)
+// Client (UI process, unelevated)
 // ---------------------------------------------------------------------------
 
 pub struct PipeClient {
     conn: Mutex<BufReader<File>>,
 }
 
-/// El servidor del pipe debe ser el ayudante que lanzamos (no un impostor que
-/// haya ocupado el nombre). GetNamedPipeServerProcessId lo reporta el kernel.
+/// The pipe server must be the helper we launched (not an impostor that
+/// squatted the name). GetNamedPipeServerProcessId is reported by the kernel.
 fn server_matches(f: &File, expected_pid: u32) -> bool {
     unsafe {
         let h = HANDLE(f.as_raw_handle());
@@ -173,8 +173,8 @@ fn server_matches(f: &File, expected_pid: u32) -> bool {
 }
 
 impl PipeClient {
-    /// Conecta al pipe del ayudante, reintentando mientras arranca (~10 s), y
-    /// verifica que el servidor sea el PID esperado (no un impostor).
+    /// Connects to the helper's pipe, retrying while it starts (~10 s), and
+    /// verifies the server is the expected PID (not an impostor).
     pub fn connect(pipe: &str, server_pid: u32) -> Option<PipeClient> {
         for _ in 0..100 {
             if let Ok(f) = OpenOptions::new().read(true).write(true).open(pipe) {
@@ -236,7 +236,7 @@ impl PipeClient {
 }
 
 // ---------------------------------------------------------------------------
-// Servidor (proceso ayudante, elevado)
+// Server (helper process, elevated)
 // ---------------------------------------------------------------------------
 
 fn handle_req(req: Req, state: &MonitorState) -> Resp {
@@ -258,7 +258,7 @@ fn serve(file: File, state: &MonitorState) {
     loop {
         line.clear();
         match reader.read_line(&mut line) {
-            Ok(0) | Err(_) => break, // cliente cerró (UI cerrada)
+            Ok(0) | Err(_) => break, // client closed (UI closed)
             Ok(_) => {}
         }
         let Ok(req) = serde_json::from_str::<Req>(line.trim_end()) else {
@@ -274,8 +274,8 @@ fn serve(file: File, state: &MonitorState) {
     }
 }
 
-/// El cliente legítimo es el proceso UI, cuyo PID se pasó al lanzar el ayudante.
-/// GetNamedPipeClientProcessId lo reporta el kernel; no es falsificable.
+/// The legitimate client is the UI process, whose PID was passed when launching
+/// the helper. GetNamedPipeClientProcessId is kernel-reported; not spoofable.
 unsafe fn client_trusted(pipe: HANDLE, parent_pid: u32) -> bool {
     let mut pid = 0u32;
     if GetNamedPipeClientProcessId(pipe, &mut pid).is_err() {
@@ -284,9 +284,9 @@ unsafe fn client_trusted(pipe: HANDLE, parent_pid: u32) -> bool {
     pid == parent_pid
 }
 
-/// Crea el pipe con DACL explícita (usuarios interactivos + SYSTEM) para que la
-/// UI de integridad media pueda abrirlo, y FILE_FLAG_FIRST_PIPE_INSTANCE para
-/// fallar si otro proceso ya ocupó el nombre (squatting).
+/// Creates the pipe with an explicit DACL (interactive users + SYSTEM) so the
+/// medium-integrity UI can open it, and FILE_FLAG_FIRST_PIPE_INSTANCE to fail
+/// if another process already took the name (squatting).
 fn create_pipe(name: &str) -> Option<HANDLE> {
     let name_w = to_wide(name);
     let sddl_w = to_wide("D:P(A;;GA;;;IU)(A;;GA;;;SY)");
@@ -326,7 +326,7 @@ fn create_pipe(name: &str) -> Option<HANDLE> {
     }
 }
 
-/// Sale del proceso si la UI (padre) muere, para no quedar como huérfano.
+/// Exits the process if the UI (parent) dies, to avoid becoming an orphan.
 fn watch_parent(parent_pid: u32) {
     std::thread::spawn(move || unsafe {
         if let Ok(h) = OpenProcess(PROCESS_SYNCHRONIZE, false, parent_pid) {
@@ -337,20 +337,20 @@ fn watch_parent(parent_pid: u32) {
     });
 }
 
-/// Bucle del ayudante: crea el pipe, atiende al cliente de confianza y termina
-/// cuando la UI se cierra. No usa `process::exit` en el camino normal para que
-/// se ejecuten los `Drop` (cierre limpio de la sesión ETW).
+/// Helper loop: creates the pipe, serves the trusted client, and exits when the
+/// UI closes. Avoids `process::exit` on the normal path so `Drop` runs (clean
+/// ETW session shutdown).
 pub fn run_server(pipe: &str, parent_pid: u32) {
     watch_parent(parent_pid);
     let state = MonitorState::new();
     loop {
-        // Si create falla (p. ej. nombre ya ocupado), no servimos: salir.
+        // If create fails (e.g. name already taken), don't serve: exit.
         let Some(handle) = create_pipe(pipe) else {
             return;
         };
         unsafe {
-            // ERROR_PIPE_CONNECTED = el cliente ya se conectó en la ventana de
-            // carrera; también cuenta como conexión válida.
+            // ERROR_PIPE_CONNECTED = the client already connected in the race
+            // window; that also counts as a valid connection.
             let connected = match ConnectNamedPipe(handle, None) {
                 Ok(()) => true,
                 Err(e) => e.code() == HRESULT::from_win32(ERROR_PIPE_CONNECTED.0),
@@ -361,10 +361,10 @@ pub fn run_server(pipe: &str, parent_pid: u32) {
             }
             if client_trusted(handle, parent_pid) {
                 let file = File::from_raw_handle(handle.0 as *mut c_void);
-                serve(file, &state); // hasta que el cliente cierre
-                return; // UI cerrada -> salir
+                serve(file, &state); // until the client closes
+                return; // UI closed -> exit
             }
-            // cliente no confiable: descartar y esperar al real
+            // untrusted client: discard and wait for the real one
             let _ = DisconnectNamedPipe(handle);
             let _ = CloseHandle(handle);
         }

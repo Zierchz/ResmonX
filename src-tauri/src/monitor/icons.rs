@@ -9,7 +9,7 @@ use windows::Win32::Storage::FileSystem::FILE_FLAGS_AND_ATTRIBUTES;
 use windows::Win32::UI::Shell::{SHGetFileInfoW, SHFILEINFOW, SHGFI_ICON, SHGFI_LARGEICON};
 use windows::Win32::UI::WindowsAndMessaging::{DestroyIcon, GetIconInfo, HICON, ICONINFO};
 
-// path del exe -> data URI PNG (None si no tiene icono accesible)
+// exe path -> PNG data URI (None if it has no accessible icon)
 fn cache() -> &'static Mutex<HashMap<String, Option<String>>> {
     static C: OnceLock<Mutex<HashMap<String, Option<String>>>> = OnceLock::new();
     C.get_or_init(|| Mutex::new(HashMap::new()))
@@ -32,7 +32,7 @@ fn base64(data: &[u8]) -> String {
     out
 }
 
-/// Convierte un HICON a PNG data URI vía GDI. Libera los bitmaps que crea.
+/// Converts an HICON to PNG data URI via GDI. Frees the bitmaps it creates.
 unsafe fn hicon_to_png(hicon: HICON) -> Option<String> {
     let mut ii = ICONINFO::default();
     GetIconInfo(hicon, &mut ii).ok()?;
@@ -54,7 +54,7 @@ unsafe fn hicon_to_png(hicon: HICON) -> Option<String> {
         let mut bi = BITMAPINFO::default();
         bi.bmiHeader.biSize = std::mem::size_of::<BITMAPINFOHEADER>() as u32;
         bi.bmiHeader.biWidth = w;
-        bi.bmiHeader.biHeight = -h; // negativo = top-down
+        bi.bmiHeader.biHeight = -h; // negative = top-down
         bi.bmiHeader.biPlanes = 1;
         bi.bmiHeader.biBitCount = 32;
         bi.bmiHeader.biCompression = BI_RGB.0;
@@ -75,7 +75,7 @@ unsafe fn hicon_to_png(hicon: HICON) -> Option<String> {
             return None;
         }
 
-        // GDI entrega BGRA; algunos iconos no traen canal alpha (todo 0)
+        // GDI delivers BGRA; some icons have no alpha channel (all 0)
         let has_alpha = buf.chunks_exact(4).any(|px| px[3] != 0);
         for px in buf.chunks_exact_mut(4) {
             px.swap(0, 2); // BGRA -> RGBA
@@ -119,7 +119,7 @@ fn extract(path: &str) -> Option<String> {
     }
 }
 
-/// Devuelve el icono del ejecutable como PNG data URI, cacheado por ruta.
+/// Returns the executable's icon as PNG data URI, cached by path.
 pub fn get_icon(path: String) -> Option<String> {
     if path.is_empty() {
         return None;

@@ -5,7 +5,7 @@ use windows::Win32::System::Diagnostics::ToolHelp::{
     TH32CS_SNAPPROCESS,
 };
 
-/// Hilos por PID vía snapshot Toolhelp32.
+/// Threads per PID via Toolhelp32 snapshot.
 pub fn thread_counts() -> HashMap<u32, u32> {
     let mut map = HashMap::new();
     unsafe {

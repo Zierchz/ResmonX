@@ -22,7 +22,7 @@ Windows resource monitor. Tauri 2 (Rust backend + WebView2) with a vanilla TypeS
 - Rust structs are `#[derive(Serialize)]`; snake_case fields map 1:1 to the TS interfaces in `main.ts`. Change one, change the other.
 - All table HTML is built with template strings and injected via `innerHTML`; user-controlled strings (process names, file paths) MUST go through `esc()` to prevent XSS.
 - Color is information: per-resource accents via the `--card-accent` CSS var and `COLORS` map; usage bars carry a severity class (`sev-ok`/`sev-warn`/`sev-crit`) from `sevClass(pct)`. Numeric readouts use the mono font (`--font-mono`).
-- Comments are short and direct.
+- Comments are short, direct, and in English (even though the app's UI strings are Spanish).
 
 ## Windows / environment gotchas
 

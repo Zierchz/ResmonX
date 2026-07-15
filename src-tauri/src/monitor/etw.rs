@@ -19,7 +19,7 @@ const KERNEL_FILE: &str = "EDD08927-9CC4-4E65-B970-C2560FB5C289";
 // keywords Kernel-File: FILEIO | CREATE | READ | WRITE | CREATE_NEW_FILE
 const KERNEL_FILE_KEYWORDS: u64 = 0x20 | 0x80 | 0x100 | 0x200 | 0x1000;
 
-// límites para acotar memoria bajo carga
+// limits to bound memory under load
 const MAX_AGG_ENTRIES: usize = 8192;
 const MAX_FILE_NAMES: usize = 16384;
 
@@ -37,11 +37,11 @@ struct IoAgg {
 
 #[derive(Default)]
 struct Shared {
-    // pid -> bytes acumulados desde el último drain
+    // pid -> bytes accumulated since the last drain
     net: Mutex<HashMap<u32, NetAgg>>,
-    // (pid, FileObject) -> bytes acumulados
+    // (pid, FileObject) -> bytes accumulated
     file_io: Mutex<HashMap<(u32, usize), IoAgg>>,
-    // FileObject -> ruta (poblado por eventos Create)
+    // FileObject -> path (populated by Create events)
     file_names: Mutex<HashMap<usize, String>>,
 }
 
@@ -60,14 +60,14 @@ pub struct FileActivity {
 
 pub struct EtwMonitor {
     shared: Arc<Shared>,
-    // mantiene viva la sesión; su Drop la detiene al cerrar la app
+    // keeps the session alive; its Drop stops it when the app closes
     trace: Option<UserTrace>,
     // "\Device\HarddiskVolume3" -> "C:"
     drives: Vec<(String, String)>,
 }
 
-/// Detiene una sesión previa con el mismo nombre (queda huérfana si la app
-/// murió sin limpiar). Si no existe, falla en silencio.
+/// Stops a previous session with the same name (left orphaned if the app
+/// died without cleaning up). If it doesn't exist, fails silently.
 fn stop_orphan_session() {
     let wide: Vec<u16> = SESSION_NAME.encode_utf16().chain(std::iter::once(0)).collect();
     let size = std::mem::size_of::<EVENT_TRACE_PROPERTIES>() + 2 * 1024;
@@ -99,7 +99,7 @@ fn drive_map() -> Vec<(String, String)> {
             }
         }
     }
-    // prefijos más largos primero para reemplazar correctamente
+    // longest prefixes first to replace correctly
     map.sort_by(|a, b| b.0.len().cmp(&a.0.len()));
     map
 }
@@ -115,7 +115,7 @@ fn net_callback(record: &EventRecord, schema_locator: &SchemaLocator, shared: &S
         return;
     };
     let parser = Parser::create(record, &schema);
-    // el PID va en el payload; el de la cabecera no es el del proceso real
+    // the PID is in the payload; the header one isn't the real process's
     let Ok(pid) = parser.try_parse::<u32>("PID") else {
         return;
     };
@@ -158,7 +158,7 @@ fn file_callback(record: &EventRecord, schema_locator: &SchemaLocator, shared: &
             let Ok(mut names) = shared.file_names.lock() else {
                 return;
             };
-            // autolimpieza si el mapa crece demasiado (nombres viejos se pierden)
+            // self-cleanup if the map grows too much (old names are lost)
             if names.len() >= MAX_FILE_NAMES {
                 names.clear();
             }
@@ -193,9 +193,9 @@ fn file_callback(record: &EventRecord, schema_locator: &SchemaLocator, shared: &
 }
 
 impl EtwMonitor {
-    /// Si la app no corre elevada, el arranque de la sesión falla y el
-    /// monitor queda deshabilitado (`available() == false`); el resto de la
-    /// app no se ve afectado.
+    /// If the app doesn't run elevated, the session startup fails and the
+    /// monitor is disabled (`available() == false`); the rest of the
+    /// app is not affected.
     pub fn new() -> Self {
         stop_orphan_session();
         let shared = Arc::new(Shared::default());
@@ -242,7 +242,7 @@ impl EtwMonitor {
         nt.to_string()
     }
 
-    /// Vacía los acumuladores y devuelve la actividad desde el último drain.
+    /// Empties the accumulators and returns activity since the last drain.
     pub fn drain(&self) -> (Vec<NetActivity>, Vec<FileActivity>) {
         let net_map = self
             .shared

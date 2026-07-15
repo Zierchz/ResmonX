@@ -18,7 +18,7 @@
     <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
-    <!-- capa de fondo fija: ECG vivo tras toda la pagina -->
+    <!-- fixed background layer: live ECG behind the whole page -->
     <div class="ecg-bg" aria-hidden="true">
       <svg class="ecg" viewBox="0 0 1500 300" preserveAspectRatio="none">
         <defs>
@@ -155,7 +155,7 @@
     </footer>
 
     <script>
-      // diccionario de traducciones (ES / EN)
+      // translation dictionary (ES / EN)
       const I18N = {
         es: {
           title: "ResmonX — Monitor de recursos para Windows",
@@ -249,7 +249,7 @@
         },
       };
 
-      // aplica un idioma a toda la pagina
+      // apply a language to the whole page
       function applyLang(lang) {
         const dict = I18N[lang] || I18N.en;
         document.documentElement.lang = lang;
@@ -272,7 +272,7 @@
         } catch (e) {}
       }
 
-      // idioma inicial: elección guardada o el del navegador
+      // initial language: saved choice or the browser's
       let saved = null;
       try {
         saved = localStorage.getItem("resmonx-lang");
@@ -283,7 +283,7 @@
       );
       applyLang(initial);
 
-      // realce progresivo: sin JS, el contenido se ve igual
+      // progressive enhancement: without JS the content looks the same
       document.documentElement.classList.add("js");
       const io = new IntersectionObserver(
         (entries) => {

@@ -136,10 +136,10 @@ const history = {
 let activeTab = "overview";
 let lastSnapshot: Snapshot | null = null;
 
-// estado de ordenamiento por tabla (id -> columna + dirección)
+// sort state per table (id -> column + direction)
 const sortState = new Map<string, { key: string; asc: boolean }>();
 
-// ordena filas (objetos) por la columna activa de la tabla; string vs número
+// sort rows (objects) by the table's active column; string vs number
 function sortRows<T>(tableId: string, rows: T[], def: { key: string; asc: boolean }): T[] {
   if (!sortState.has(tableId)) sortState.set(tableId, def);
   const { key, asc } = sortState.get(tableId)!;
@@ -154,7 +154,7 @@ function sortRows<T>(tableId: string, rows: T[], def: { key: string; asc: boolea
   });
 }
 
-// marca la flecha ▲/▼ en el encabezado activo de cada tabla
+// mark the ▲/▼ arrow on each table's active header
 function refreshSortIndicators() {
   document.querySelectorAll<HTMLElement>("th[data-sort]").forEach((th) => {
     const st = sortState.get(th.closest("table")?.id ?? "");
@@ -165,7 +165,7 @@ function refreshSortIndicators() {
 }
 
 function push(arr: number[], v: number) {
-  // primera muestra: rellena el historial para que la sparkline salga completa
+  // first sample: fill the history so the sparkline is complete
   if (arr.length === 0) {
     for (let i = 0; i < HISTORY_LEN; i++) arr.push(v);
     return;
@@ -194,7 +194,7 @@ function esc(s: string): string {
     .replace(/"/g, "&quot;");
 }
 
-// filtra filas por nombre (subcadena) o PID exacto, según el input dado
+// filter rows by name (substring) or exact PID, per the given input
 function applyFilter<T extends { name: string; pid: number }>(rows: T[], inputId: string): T[] {
   const q = (document.getElementById(inputId) as HTMLInputElement | null)?.value.toLowerCase().trim() ?? "";
   if (!q) return rows;
@@ -218,7 +218,7 @@ function sparkline(values: number[], max: number, color: string): string {
   </svg>`;
 }
 
-// acento único para sparklines y valores (coincide con --accent en CSS)
+// single accent for sparklines and values (matches --accent in CSS)
 const ACCENT = "#6d8db3";
 const COLORS = {
   cpu: ACCENT,
@@ -228,27 +228,27 @@ const COLORS = {
   gpu: ACCENT,
 };
 
-// clase de severidad según porcentaje de uso
+// severity class based on usage percentage
 function sevClass(pct: number): string {
   if (pct >= 85) return "sev-crit";
   if (pct >= 60) return "sev-warn";
   return "sev-ok";
 }
 
-// fondo tipo heatmap (estilo Task Manager): naranja translúcido por intensidad
+// heatmap-style background (Task Manager): translucent orange by intensity
 function heat(ratio: number): string {
   const r = Math.max(0, Math.min(1, ratio));
   if (r < 0.015) return "";
   return ` style="background:rgba(255,140,0,${(0.07 + 0.4 * r).toFixed(3)})"`;
 }
 
-// tono de azul según la carga del núcleo: apagado en reposo, brillante bajo carga
+// blue tone based on core load: dim at idle, bright under load
 function coreBlue(pct: number): string {
   const p = Math.max(0, Math.min(100, pct)) / 100;
   return `hsl(210 55% ${(34 + p * 34).toFixed(0)}%)`;
 }
 
-// iconos de procesos: cache por ruta + carga diferida vía backend
+// process icons: cache by path + lazy load via backend
 const iconCache = new Map<string, string | null>();
 const iconInflight = new Set<string>();
 
@@ -313,7 +313,7 @@ function renderTopbar(s: Snapshot) {
   document.getElementById("top-gpu")!.textContent = s.gpu ? `GPU ${s.gpu.utilization}%` : "GPU n/d";
 }
 
-// --- Cards canónicas (idénticas en Resumen y en cada sección) ---
+// --- Canonical cards (identical in Overview and each section) ---
 
 function cpuCard(s: Snapshot): string {
   return card(
@@ -505,7 +505,7 @@ function renderMemory(s: Snapshot) {
     memCard(s) +
     card("En espera (caché)", fmtBytes(standby), `modificada ${fmtBytes(modified)}`, "", COLORS.mem);
 
-  // cálidos (naranjas del heatmap) = memoria consumida; fríos (azules de la app) = disponible
+  // warm (heatmap oranges) = memory used; cool (app blues) = available
   const segs = [
     { label: "En uso", value: used, color: "#e8843c" },
     { label: "Modificada", value: modified, color: "#b3632a" },
@@ -517,7 +517,7 @@ function renderMemory(s: Snapshot) {
   const rings = segs
     .map((g) => {
       const frac = m.total > 0 ? (g.value / m.total) * 100 : 0;
-      // pathLength=100 => dasharray/offset en unidades de porcentaje
+      // pathLength=100 => dasharray/offset in percentage units
       const seg = `<circle cx="60" cy="60" r="46" fill="none" stroke="${g.color}" stroke-width="15" pathLength="100" stroke-dasharray="${frac.toFixed(2)} ${(100 - frac).toFixed(2)}" stroke-dashoffset="${(-acc).toFixed(2)}"></circle>`;
       acc += frac;
       return seg;
@@ -763,7 +763,7 @@ function renderGpu(s: Snapshot) {
   document.querySelector("#gpu-table tbody")!.innerHTML = rows;
 }
 
-// --- Toast, confirmación y menú contextual ---
+// --- Toast, confirmation and context menu ---
 
 function toast(msg: string, error = false) {
   const el = document.createElement("div");
@@ -854,7 +854,7 @@ function openCtxMenu(x: number, y: number, t: CtxTarget) {
     )
     .join("");
   menu.hidden = false;
-  // ajustar para no salirse de la ventana
+  // adjust so it doesn't overflow the window
   const rect = menu.getBoundingClientRect();
   const px = Math.min(x, window.innerWidth - rect.width - 6);
   const py = Math.min(y, window.innerHeight - rect.height - 6);
@@ -877,11 +877,11 @@ function setupContextMenu() {
   document.addEventListener("contextmenu", (ev) => {
     const e = ev as MouseEvent;
     const target = e.target as HTMLElement;
-    // permitir el menú nativo solo en campos de texto (copiar/pegar)
+    // allow the native menu only in text fields (copy/paste)
     if (target.closest("input, textarea")) return;
-    // suprimir el menú nativo del WebView en el resto de la app
+    // suppress the WebView's native menu everywhere else
     e.preventDefault();
-    // el menú personalizado solo en filas de proceso
+    // the custom menu only on process rows
     const row = target.closest("tr[data-pid]") as HTMLElement | null;
     if (!row) {
       closeCtxMenu();
@@ -896,7 +896,7 @@ function setupContextMenu() {
     });
   });
 
-  // cerrar el menú ante cualquier interacción externa
+  // close the menu on any outside interaction
   document.addEventListener("click", (e) => {
     if (!(e.target as HTMLElement).closest("#ctx-menu")) closeCtxMenu();
   });
@@ -936,7 +936,7 @@ async function tick() {
   }
 }
 
-// título mostrado en la barra superior por sección
+// title shown in the top bar per section
 const TITLES: Record<string, string> = {
   overview: "Resumen",
   cpu: "CPU",
@@ -947,7 +947,7 @@ const TITLES: Record<string, string> = {
   gpu: "GPU",
 };
 
-// sub-tabs dentro de una sección: muestra una tabla a la vez
+// sub-tabs within a section: show one table at a time
 function setupSubtabs() {
   document.querySelectorAll<HTMLElement>(".subtabs").forEach((bar) => {
     bar.addEventListener("click", (ev) => {
@@ -977,7 +977,7 @@ function setupUi() {
     });
   });
 
-  // ordenamiento genérico: click en cualquier encabezado con data-sort
+  // generic sorting: click any header with data-sort
   document.addEventListener("click", (ev) => {
     const th = (ev.target as HTMLElement).closest("th[data-sort]") as HTMLElement | null;
     if (!th) return;
@@ -988,7 +988,7 @@ function setupUi() {
     if (cur && cur.key === key) {
       sortState.set(id, { key, asc: !cur.asc });
     } else {
-      // texto arranca ascendente; números, descendente
+      // text starts ascending; numbers, descending
       sortState.set(id, { key, asc: th.dataset.type === "text" });
     }
     if (lastSnapshot) render(lastSnapshot);
