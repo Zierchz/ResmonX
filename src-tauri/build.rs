@@ -1,6 +1,7 @@
-// Manifest que pide elevación (UAC) al iniciar. Solo en release, para que
-// `tauri dev` no solicite administrador en cada recompilación.
-const ADMIN_MANIFEST: &str = r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
+// Manifest de la app. La ventana corre SIN elevar (asInvoker) para que Modo
+// Objetivo de ASUS OLED Care la ilumine; la elevación la pide en runtime el
+// ayudante (ver src/ipc.rs). Mantiene DPI awareness y common controls.
+const APP_MANIFEST: &str = r#"<?xml version="1.0" encoding="UTF-8" standalone="yes"?>
 <assembly xmlns="urn:schemas-microsoft-com:asm.v1" manifestVersion="1.0">
   <dependency>
     <dependentAssembly>
@@ -26,7 +27,7 @@ const ADMIN_MANIFEST: &str = r#"<?xml version="1.0" encoding="UTF-8" standalone=
   <trustInfo xmlns="urn:schemas-microsoft-com:asm.v3">
     <security>
       <requestedPrivileges>
-        <requestedExecutionLevel level="requireAdministrator" uiAccess="false" />
+        <requestedExecutionLevel level="asInvoker" uiAccess="false" />
       </requestedPrivileges>
     </security>
   </trustInfo>
@@ -37,7 +38,7 @@ fn main() {
     let mut attributes = tauri_build::Attributes::new();
     if std::env::var("PROFILE").as_deref() == Ok("release") {
         attributes = attributes
-            .windows_attributes(tauri_build::WindowsAttributes::new().app_manifest(ADMIN_MANIFEST));
+            .windows_attributes(tauri_build::WindowsAttributes::new().app_manifest(APP_MANIFEST));
     }
     tauri_build::try_build(attributes).expect("failed to run tauri-build");
 }

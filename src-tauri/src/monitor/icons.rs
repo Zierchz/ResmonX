@@ -120,7 +120,6 @@ fn extract(path: &str) -> Option<String> {
 }
 
 /// Devuelve el icono del ejecutable como PNG data URI, cacheado por ruta.
-#[tauri::command]
 pub fn get_icon(path: String) -> Option<String> {
     if path.is_empty() {
         return None;

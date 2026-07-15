@@ -102,12 +102,10 @@ fn set_suspended(pid: u32, suspend: bool) -> Result<(), String> {
     }
 }
 
-#[tauri::command]
 pub fn kill_process(pid: u32) -> Result<(), String> {
     terminate(pid)
 }
 
-#[tauri::command]
 pub fn kill_process_tree(pid: u32) -> Result<(), String> {
     // hijos primero, raíz al final
     for child in descendants(pid) {
@@ -116,12 +114,10 @@ pub fn kill_process_tree(pid: u32) -> Result<(), String> {
     terminate(pid)
 }
 
-#[tauri::command]
 pub fn suspend_process(pid: u32) -> Result<(), String> {
     set_suspended(pid, true)
 }
 
-#[tauri::command]
 pub fn resume_process(pid: u32) -> Result<(), String> {
     set_suspended(pid, false)
 }

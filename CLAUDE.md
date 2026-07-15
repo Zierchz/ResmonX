@@ -11,9 +11,10 @@ Windows resource monitor. Tauri 2 (Rust backend + WebView2) with a vanilla TypeS
 
 ## Architecture
 
-- Backend exposes ONE polling command, `get_snapshot` (`monitor/mod.rs`), returning a single JSON `Snapshot` that aggregates every subsystem. The frontend polls it every 1.5 s (`POLL_MS`) and keeps a 120-sample ring buffer (`HISTORY_LEN`) for sparklines.
-- Process actions are separate commands in `monitor/control.rs`: `kill_process`, `kill_process_tree`, `suspend_process`, `resume_process`. Register new commands in BOTH `control.rs` (as `#[tauri::command]`) and `lib.rs` `generate_handler!` using the full path `monitor::control::name` — a `pub use` re-export does NOT carry the command macros.
-- One backend module per subsystem under `monitor/`: `cpufreq` (PDH), `pdh` (memory + per-disk counters), `gpu` (NVML), `net` (netstat2), `services` (SCM), `threads` (Toolhelp), `etw` (ETW session), `control` (actions).
+- **UI/helper split (elevation).** The window process runs unelevated (`asInvoker`, set in `build.rs`) so ASUS OLED "Target Mode" keeps it bright. A `--helper` copy of the same `.exe`, spawned elevated via UAC at startup (`ipc.rs`), does all monitoring and serves it over a named pipe. `commands.rs` holds a `Backend` enum — `Local` (monitor in-process; used when already elevated, e.g. dev in an admin terminal) or `Remote` (pipe client) — and every Tauri command dispatches through it. The helper verifies pipe clients by exe path; it exits when the UI disconnects.
+- Backend exposes ONE polling command, `get_snapshot`, returning a single JSON `Snapshot` (built by `MonitorState::snapshot` in `monitor/mod.rs`) that aggregates every subsystem. The frontend polls it every 1.5 s (`POLL_MS`) and keeps a 120-sample ring buffer (`HISTORY_LEN`) for sparklines.
+- Process actions live in `monitor/control.rs` as plain fns: `kill_process`, `kill_process_tree`, `suspend_process`, `resume_process`. To add a command: write the plain fn, add a `Req`/`Resp` arm + `Backend` method (`ipc.rs`/`commands.rs`), and register the `#[tauri::command]` wrapper in `lib.rs` `generate_handler!`.
+- One backend module per subsystem under `monitor/`: `cpufreq` (PDH), `pdh` (memory + per-disk counters), `gpu` (NVML), `net` (netstat2), `services` (SCM), `threads` (Toolhelp), `etw` (ETW session), `control` (actions), `icons` (exe icon → PNG). `ipc.rs` (pipe + elevation) and `commands.rs` (`Backend` + command wrappers) sit at `src/` root.
 - Frontend is one file (`src/main.ts`): interfaces mirror the Rust structs, one `render*` function per tab, canonical card builders (`cpuCard`, `memCard`, …) reused between Overview and each section, plus the context-menu / confirm-dialog / toast helpers.
 
 ## Conventions
@@ -25,7 +26,7 @@ Windows resource monitor. Tauri 2 (Rust backend + WebView2) with a vanilla TypeS
 
 ## Windows / environment gotchas
 
-- **ETW needs elevation.** `etw.rs` starts a `ferrisetw` user-trace session ("ResmonX-Trace"); without admin it fails and `EtwMonitor::available()` is false — the per-process-network and per-file-disk sections show a notice and everything else keeps working. It stops orphan sessions on startup and on `Drop`.
+- **ETW needs elevation** and now runs inside the elevated helper (see the split above). `etw.rs` starts a `ferrisetw` user-trace session ("ResmonX-Trace"); without elevation it fails and `EtwMonitor::available()` is false — the per-process-network and per-file-disk sections show a notice and everything else keeps working. It stops orphan sessions on startup and on `Drop`. If the user declines the helper's UAC prompt, the UI falls back to `Local` unelevated (no ETW).
 - **PDH handles** are typed structs in the `windows` crate (`PDH_HQUERY`/`PDH_HCOUNTER`), not `isize`. English counter names (`PdhAddEnglishCounterW`) so they work on localized Windows.
 - The debug `.exe` is tied to the dev server (`devUrl` → localhost:1420); running it without `tauri dev` shows "can't reach this page". Only the **release** `.exe` embeds the frontend and runs standalone.
 - GPU is NVIDIA-only (NVML); `GpuMonitor` degrades to `None` otherwise.

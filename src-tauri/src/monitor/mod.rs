@@ -146,9 +146,9 @@ impl MonitorState {
     }
 }
 
-#[tauri::command]
-pub fn get_snapshot(state: tauri::State<MonitorState>) -> Snapshot {
-    let inner = &mut *state.0.lock().unwrap();
+impl MonitorState {
+    pub fn snapshot(&self) -> Snapshot {
+    let inner = &mut *self.0.lock().unwrap();
     let elapsed = inner.last.elapsed().as_secs_f64().max(0.2);
     inner.last = Instant::now();
 
@@ -296,5 +296,6 @@ pub fn get_snapshot(state: tauri::State<MonitorState>) -> Snapshot {
         etw: inner.etw.available(),
         net_procs,
         file_activity,
+    }
     }
 }
