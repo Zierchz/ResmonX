@@ -36,3 +36,4 @@ Windows resource monitor. Tauri 2 (Rust backend + WebView2) with a vanilla TypeS
 
 - Before committing: propose the commit message (English, no body, no co-author) and the exact file list, then wait for approval.
 - The GitHub integration token is read-only for the repo (can't create repos/releases). Pushes work via the git credential manager; releases must be published via the web UI or `gh`.
+- Release: run `scripts/publish-release.ps1` (needs `gh`; `-Build` to build first). It uploads the versioned installer plus a stable `ResmonX-Setup.exe`, and takes the release notes from `notes/v<version>.md` (Markdown) — create that file per version before publishing.
