@@ -1,0 +1,565 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+/* ResmonX is dark-only: tokens live on :root and map onto shadcn's names. */
+:root {
+  --radius: 0.5rem;
+
+  /* Windows 11 Task Manager style palette (dark) */
+  --background: #1c1c1c;
+  --foreground: #e8e8e8;
+  --card: #272727;
+  --card-foreground: #e8e8e8;
+  --popover: #272727;
+  --popover-foreground: #e8e8e8;
+  --primary: #6d8db3;
+  --primary-foreground: #101418;
+  --secondary: #323232;
+  --secondary-foreground: #e8e8e8;
+  --muted: #272727;
+  --muted-foreground: #9d9d9d;
+  --accent: #323232;
+  --accent-foreground: #e8e8e8;
+  --destructive: #ef5350;
+  --destructive-foreground: #ffffff;
+  --border: #383838;
+  --input: #383838;
+  --ring: #6d8db3;
+
+  /* ResmonX severity tokens: the readout states its own status */
+  --ok: #66bb6a;
+  --warn: #ffa726;
+  --crit: #ef5350;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+
+  --color-ok: var(--ok);
+  --color-warn: var(--warn);
+  --color-crit: var(--crit);
+
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+
+  --font-sans: "Segoe UI", system-ui, sans-serif;
+  --font-mono: ui-monospace, "Cascadia Mono", "Consolas", monospace;
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  html {
+    color-scheme: dark;
+    font-size: 14px;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-sans);
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  /* numeric readouts use the mono font */
+  .num,
+  .mono {
+    font-family: var(--font-mono);
+    font-variant-numeric: tabular-nums;
+  }
+
+  /* Tailwind v4 no longer sets a pointer cursor on buttons; restore it. */
+  button:not(:disabled),
+  [role="button"]:not([aria-disabled="true"]) {
+    cursor: pointer;
+  }
+}
+
+/* ResmonX visual identity: ported component styles (Task Manager Win11 look). */
+@layer components {
+  /* two-column section layout */
+  .split {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+  }
+  .split-aside {
+    flex: 0 0 25%;
+    max-width: 25%;
+    position: sticky;
+    top: 0;
+  }
+  .split-main {
+    flex: 1 1 auto;
+    min-width: 0;
+  }
+  @media (max-width: 820px) {
+    .split {
+      flex-direction: column;
+    }
+    .split-aside {
+      flex-basis: auto;
+      max-width: none;
+      width: 100%;
+      position: static;
+    }
+  }
+
+  .section-title {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted-foreground);
+    margin: 18px 0 10px;
+    font-weight: 600;
+  }
+  .section-title.first {
+    margin-top: 0;
+  }
+
+  /* cards */
+  .cards {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+  .cards.stacked {
+    grid-template-columns: 1fr;
+    margin-bottom: 0;
+  }
+  @media (max-width: 820px) {
+    .cards.stacked {
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+    }
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+  }
+  .card-title {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    color: var(--muted-foreground);
+    margin-bottom: 6px;
+  }
+  .card-value {
+    font-size: 23px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    color: var(--card-accent, var(--primary));
+    margin-bottom: 4px;
+  }
+  .card-detail {
+    font-size: 12px;
+    color: var(--muted-foreground);
+    margin-bottom: 8px;
+    min-height: 15px;
+  }
+  .spark {
+    width: 100%;
+    height: 60px;
+    display: block;
+  }
+
+  /* tables */
+  .table-wrap {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    overflow: auto;
+    max-height: calc(100vh - 220px);
+  }
+  .rx-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 13px;
+  }
+  .rx-table thead th {
+    position: sticky;
+    top: 0;
+    background: var(--secondary);
+    text-align: left;
+    padding: 9px 14px;
+    font-weight: 600;
+    color: var(--muted-foreground);
+    user-select: none;
+    white-space: nowrap;
+  }
+  .rx-table thead th.sortable {
+    cursor: pointer;
+  }
+  .rx-table thead th.sortable:hover {
+    color: var(--foreground);
+  }
+  .rx-table thead th .sort-ind {
+    font-size: 9px;
+    color: var(--primary);
+  }
+  .rx-table tbody td {
+    padding: 6px 14px;
+    border-top: 1px solid var(--border);
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+  .rx-table tbody tr {
+    transition: background 0.12s ease, box-shadow 0.12s ease;
+  }
+  .rx-table tbody tr:nth-child(even) {
+    background: rgba(255, 255, 255, 0.018);
+  }
+  .rx-table tbody tr:hover {
+    background: color-mix(in srgb, var(--secondary) 78%, var(--primary));
+    box-shadow: inset 2px 0 0 var(--primary);
+  }
+  .rx-table td.num {
+    text-align: right;
+  }
+  .pname {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .pico {
+    width: 16px;
+    height: 16px;
+    flex-shrink: 0;
+    object-fit: contain;
+  }
+  td.path {
+    max-width: 420px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* core grid */
+  .core-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(124px, 1fr));
+    gap: 10px;
+  }
+  .core-cell {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 12px 14px;
+  }
+  .core-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--muted-foreground);
+    margin-bottom: 9px;
+    font-variant-numeric: tabular-nums;
+  }
+  .core-track {
+    height: 8px;
+    border-radius: 4px;
+    background: var(--secondary);
+    overflow: hidden;
+  }
+  .core-fill {
+    height: 100%;
+    border-radius: 4px;
+    background: var(--primary);
+    transition: width 0.3s ease, background 0.3s ease;
+  }
+
+  /* severity bars */
+  .sev-ok {
+    background: var(--ok);
+  }
+  .sev-warn {
+    background: var(--warn);
+  }
+  .sev-crit {
+    background: var(--crit);
+  }
+  .usage-bar {
+    display: inline-block;
+    width: 80px;
+    height: 6px;
+    background: var(--secondary);
+    border-radius: 3px;
+    overflow: hidden;
+    vertical-align: middle;
+    margin-right: 8px;
+  }
+  .usage-fill {
+    height: 100%;
+    border-radius: 3px;
+    background: var(--primary);
+    transition: width 0.3s ease, background 0.3s ease;
+  }
+
+  /* memory donut */
+  .donut-panel {
+    margin-top: 12px;
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+  }
+  .donut {
+    width: 150px;
+    height: 150px;
+    flex-shrink: 0;
+  }
+  .donut-val {
+    fill: var(--foreground);
+    font-size: 24px;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+  .donut-cap {
+    fill: var(--muted-foreground);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+  .donut-panel .legend {
+    flex-direction: column;
+    gap: 7px;
+    align-self: stretch;
+  }
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    font-size: 12px;
+    color: var(--muted-foreground);
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-variant-numeric: tabular-nums;
+  }
+  .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+    flex-shrink: 0;
+  }
+
+  /* notice (ETW not available) */
+  .notice {
+    background: var(--card);
+    border: 1px dashed var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    color: var(--muted-foreground);
+    font-size: 13px;
+  }
+
+  /* sub-tabs: one table at a time within a section */
+  .subtabs {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .subtab {
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    color: var(--muted-foreground);
+    padding: 8px 12px;
+    margin-bottom: -1px;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 13px;
+  }
+  .subtab:hover {
+    color: var(--foreground);
+  }
+  .subtab.active {
+    color: var(--foreground);
+    border-bottom-color: var(--primary);
+  }
+
+  /* service state badges */
+  .badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    padding: 1px 8px;
+    border-radius: 10px;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--muted-foreground);
+    background: var(--secondary);
+  }
+  .badge::before {
+    content: "";
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+  .badge-run {
+    color: var(--ok);
+    background: rgba(102, 187, 106, 0.12);
+  }
+  .badge-stop {
+    color: var(--muted-foreground);
+  }
+  .badge-other {
+    color: var(--warn);
+    background: rgba(255, 167, 38, 0.12);
+  }
+
+  /* app shell layout */
+  .app-shell {
+    display: flex;
+    flex-direction: row;
+    height: 100vh;
+  }
+
+  .sidebar {
+    width: 64px;
+    flex-shrink: 0;
+    position: relative;
+    z-index: 10;
+    background: var(--card);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    padding: 12px 6px 8px;
+  }
+  .nav {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+  .nav-logo {
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    object-fit: contain;
+    display: block;
+  }
+  .nav-item {
+    position: relative;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: none;
+    border: none;
+    color: var(--muted-foreground);
+    padding: 11px 0;
+    border-radius: 7px;
+    cursor: pointer;
+    font-family: inherit;
+  }
+  .nav-item svg {
+    width: 20px;
+    height: 20px;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.4;
+    stroke-linecap: round;
+    stroke-linejoin: round;
+    flex-shrink: 0;
+  }
+  .nav-item:hover {
+    background: var(--secondary);
+    color: var(--foreground);
+  }
+  .nav-item.active {
+    background: var(--secondary);
+    color: var(--foreground);
+  }
+  /* vertical bar indicator for the active item (Win11) */
+  .nav-item.active::before {
+    content: "";
+    position: absolute;
+    left: -2px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 3px;
+    height: 16px;
+    border-radius: 2px;
+    background: var(--primary);
+  }
+
+  .main-area {
+    flex: 1;
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+  }
+  .topbar {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 14px 20px 10px;
+  }
+  .topbar-stats {
+    display: flex;
+    align-items: center;
+    gap: 18px;
+  }
+  .view-title {
+    font-size: 20px;
+    font-weight: 600;
+    color: var(--foreground);
+  }
+  .stat {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-variant-numeric: tabular-nums;
+    color: var(--foreground);
+    font-size: 12px;
+  }
+  .stat::before {
+    content: "";
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--primary);
+    flex-shrink: 0;
+  }
+  .content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 6px 20px 20px;
+  }
+}

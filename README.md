@@ -35,7 +35,7 @@ Some data comes from an ETW (Event Tracing for Windows) session and only appears
   - [`nvml-wrapper`](https://crates.io/crates/nvml-wrapper) — NVIDIA GPU metrics.
   - [`ferrisetw`](https://crates.io/crates/ferrisetw) — ETW session for per-process network and per-file disk I/O.
   - [`windows`](https://crates.io/crates/windows) — PDH counters (CPU frequency, memory & per-disk counters), Windows services (SCM), process/thread control, Toolhelp snapshots.
-- **Frontend:** Vanilla TypeScript + [Vite](https://vitejs.dev). No UI framework; charts are hand-rendered inline SVG. Uses the Tauri opener and clipboard-manager plugins.
+- **Frontend:** [React](https://react.dev) + [Vite](https://vitejs.dev), [Tailwind CSS](https://tailwindcss.com) v4, [shadcn/ui](https://ui.shadcn.com) (Radix primitives) and [TanStack Table](https://tanstack.com/table). Charts (sparklines, donut) are hand-rendered inline SVG. Uses the Tauri opener and clipboard-manager plugins.
 
 ## How it works
 
@@ -49,10 +49,14 @@ Effective CPU frequency is derived from the PDH counter `\Processor Information(
 
 ```
 resmonx/
-├── index.html            # app shell + tab markup
-├── src/                  # frontend (TypeScript + Vite)
-│   ├── main.ts           # polling, state, rendering, context menu
-│   └── styles.css
+├── index.html            # mounts the React root
+├── src/                  # frontend (React + Vite)
+│   ├── main.tsx          # React entry
+│   ├── App.tsx           # shell: sidebar + topbar + active-tab state
+│   ├── index.css         # Tailwind + design tokens
+│   ├── hooks/            # useSnapshot (polling), useIcon
+│   ├── lib/              # types, tauri wrappers, format, filters
+│   └── components/       # views/, cards/, tables/, process/, layout/, ui/ (shadcn)
 └── src-tauri/            # backend (Rust)
     ├── src/
     │   ├── lib.rs        # Tauri builder + command registration

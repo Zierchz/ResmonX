@@ -1,6 +1,6 @@
 # ResmonX — Project guide
 
-Windows resource monitor. Tauri 2 (Rust backend + WebView2) with a vanilla TypeScript + Vite frontend, no UI framework. Windows-only.
+Windows resource monitor. Tauri 2 (Rust backend + WebView2) with a React + Vite frontend (Tailwind CSS v4, shadcn/ui, TanStack Table). Windows-only.
 
 ## Commands
 
@@ -15,13 +15,13 @@ Windows resource monitor. Tauri 2 (Rust backend + WebView2) with a vanilla TypeS
 - Backend exposes ONE polling command, `get_snapshot`, returning a single JSON `Snapshot` (built by `MonitorState::snapshot` in `monitor/mod.rs`) that aggregates every subsystem. The frontend polls it every 1.5 s (`POLL_MS`) and keeps a 120-sample ring buffer (`HISTORY_LEN`) for sparklines.
 - Process actions live in `monitor/control.rs` as plain fns: `kill_process`, `kill_process_tree`, `suspend_process`, `resume_process`. To add a command: write the plain fn, add a `Req`/`Resp` arm + `Backend` method (`ipc.rs`/`commands.rs`), and register the `#[tauri::command]` wrapper in `lib.rs` `generate_handler!`.
 - One backend module per subsystem under `monitor/`: `cpufreq` (PDH), `pdh` (memory + per-disk counters), `gpu` (NVML), `net` (netstat2), `services` (SCM), `threads` (Toolhelp), `etw` (ETW session), `control` (actions), `icons` (exe icon → PNG). `ipc.rs` (pipe + elevation) and `commands.rs` (`Backend` + command wrappers) sit at `src/` root.
-- Frontend is one file (`src/main.ts`): interfaces mirror the Rust structs, one `render*` function per tab, canonical card builders (`cpuCard`, `memCard`, …) reused between Overview and each section, plus the context-menu / confirm-dialog / toast helpers.
+- Frontend (`src/`) is React: `main.tsx` → `App.tsx` (sidebar + topbar + active-tab state). `hooks/useSnapshot.ts` polls `get_snapshot` and keeps the history rings; one component per tab under `components/views/` (`Overview`, `Cpu`, …). Shared pieces: `components/tables/DataTable.tsx` (generic TanStack table — sort + filter + per-row context menu), canonical cards in `components/cards/resourceCards.tsx` (`CpuCard`, `MemCard`, …) reused between Overview and each section, `components/process/` (`ConfirmProvider` + `RowContextMenu`), and shadcn primitives in `components/ui/`. `lib/` holds `types.ts`, `tauri.ts` (command wrappers), `format.ts`, `filters.ts`.
 
 ## Conventions
 
-- Rust structs are `#[derive(Serialize)]`; snake_case fields map 1:1 to the TS interfaces in `main.ts`. Change one, change the other.
-- All table HTML is built with template strings and injected via `innerHTML`; user-controlled strings (process names, file paths) MUST go through `esc()` to prevent XSS.
-- Color is information: per-resource accents via the `--card-accent` CSS var and `COLORS` map; usage bars carry a severity class (`sev-ok`/`sev-warn`/`sev-crit`) from `sevClass(pct)`. Numeric readouts use the mono font (`--font-mono`).
+- Rust structs are `#[derive(Serialize)]`; snake_case fields map 1:1 to the TS interfaces in `src/lib/types.ts`. Change one, change the other.
+- Tables render through `DataTable` (TanStack Table); React escapes text by default, so no manual escaping is needed. Column defs live in each view: `meta.num` right-aligns, `meta.cellStyle` sets the heatmap background, `meta.path` truncates long paths. Numeric columns use `sortDescFirst: true`; when the default sort is a computed value with no visible column, pre-sort the data and omit `initialSorting`.
+- Color is information: per-resource accents via the `--card-accent` CSS var (set by `MetricCard`) and the `COLORS` map in `lib/format.ts`; usage bars carry a severity class (`sev-ok`/`sev-warn`/`sev-crit`) from `sevClass(pct)`. Numeric readouts use the mono font (`--font-mono`). App-specific visual styles live in `src/index.css`, whose design tokens map onto shadcn's CSS variables; the app is dark-only.
 - Comments are short, direct, and in English (even though the app's UI strings are Spanish).
 
 ## Windows / environment gotchas
