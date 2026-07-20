@@ -17,7 +17,6 @@ export type UpdateStatus =
 export function useUpdate() {
   const [status, setStatus] = useState<UpdateStatus>("idle");
   const [version, setVersion] = useState<string | null>(null);
-  const [notes, setNotes] = useState<string | null>(null);
   const [progress, setProgress] = useState(0); // 0..100
   const update = useRef<Update | null>(null);
 
@@ -28,7 +27,6 @@ export function useUpdate() {
       if (u) {
         update.current = u;
         setVersion(u.version);
-        setNotes(u.body ?? null);
         setStatus("available");
       } else {
         update.current = null;
@@ -75,5 +73,5 @@ export function useUpdate() {
     }
   }, []);
 
-  return { status, version, notes, progress, checkNow, install };
+  return { status, version, progress, checkNow, install };
 }

@@ -3,14 +3,12 @@ import { useConfirm } from "@/components/process/ConfirmProvider";
 import { useUpdate } from "@/hooks/useUpdate";
 
 export function UpdateButton() {
-  const { status, version, notes, progress, checkNow, install } = useUpdate();
+  const { status, version, progress, checkNow, install } = useUpdate();
   const confirm = useConfirm();
 
   const onClick = async () => {
     if (status === "available") {
-      const msg = `¿Actualizar ResmonX a la versión ${version}? Se descargará, instalará y reiniciará la app.${
-        notes ? `\n\n${notes}` : ""
-      }`;
+      const msg = `Hay una nueva versión disponible (${version}). Se instalará y la app se reiniciará.`;
       if (await confirm(msg)) void install();
       return;
     }
