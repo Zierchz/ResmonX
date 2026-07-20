@@ -1,4 +1,5 @@
 import { toggleWidget } from "@/lib/tauri";
+import { UpdateButton } from "@/components/layout/UpdateButton";
 import type { Snapshot } from "@/lib/types";
 
 export function Topbar({ title, snapshot: s }: { title: string; snapshot: Snapshot | null }) {
@@ -27,6 +28,7 @@ export function Topbar({ title, snapshot: s }: { title: string; snapshot: Snapsh
           </svg>
           Widget
         </button>
+        <UpdateButton />
       </div>
     </header>
   );

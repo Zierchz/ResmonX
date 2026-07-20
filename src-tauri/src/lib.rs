@@ -113,6 +113,8 @@ pub fn run() {
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_clipboard_manager::init())
+        .plugin(tauri_plugin_updater::Builder::new().build())
+        .plugin(tauri_plugin_process::init())
         .manage(backend)
         .on_window_event(|window, event| {
             // Closing the main window minimizes to tray instead of quitting;
@@ -160,6 +162,7 @@ pub fn run() {
             commands::suspend_process,
             commands::resume_process,
             commands::get_icon,
+            commands::shutdown_helper,
             toggle_widget,
             open_main_tab,
         ])

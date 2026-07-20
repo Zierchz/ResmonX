@@ -46,6 +46,7 @@ enum Req {
     Suspend(u32),
     Resume(u32),
     Icon(String),
+    Shutdown,
 }
 
 #[derive(Serialize, Deserialize)]
@@ -226,6 +227,10 @@ impl PipeClient {
     pub fn resume(&self, pid: u32) -> Result<(), String> {
         self.action(Req::Resume(pid))
     }
+    // Ask the helper to exit so the updater can replace the locked .exe.
+    pub fn shutdown(&self) -> Result<(), String> {
+        self.action(Req::Shutdown)
+    }
 
     pub fn icon(&self, path: String) -> Option<String> {
         match self.call(&Req::Icon(path)) {
@@ -249,6 +254,7 @@ fn handle_req(req: Req, state: &MonitorState) -> Resp {
         Req::Suspend(pid) => Resp::Action(control::suspend_process(pid)),
         Req::Resume(pid) => Resp::Action(control::resume_process(pid)),
         Req::Icon(path) => Resp::Icon(icons::get_icon(path)),
+        Req::Shutdown => Resp::Action(Ok(())),
     }
 }
 
@@ -264,6 +270,7 @@ fn serve(file: File, state: &MonitorState) {
         let Ok(req) = serde_json::from_str::<Req>(line.trim_end()) else {
             continue;
         };
+        let shutdown = matches!(req, Req::Shutdown);
         let resp = handle_req(req, state);
         let mut out = serde_json::to_string(&resp).unwrap_or_else(|_| "null".into());
         out.push('\n');
@@ -271,6 +278,10 @@ fn serve(file: File, state: &MonitorState) {
             break;
         }
         let _ = reader.get_mut().flush();
+        // Exit cleanly (return, not process::exit) so Drop stops the ETW session.
+        if shutdown {
+            return;
+        }
     }
 }
 

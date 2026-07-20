@@ -1,7 +1,7 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "resmonx",
-  "version": "0.4.0",
+  "version": "0.5.0",
   "identifier": "com.zierchz.resmonx",
   "build": {
     "beforeDevCommand": "npm run dev",
@@ -24,9 +24,21 @@
       "csp": null
     }
   },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IDQ4QjEzODNERDVDRThERApSV1RkNkZ6ZGd4T0xCQ010K0FBcnlMUnRVZjBiMC9pNVk0cGNleFNUemhCdDZzVndrY1FRTFVlaQo=",
+      "endpoints": [
+        "https://github.com/Zierchz/ResmonX/releases/latest/download/latest.json"
+      ],
+      "windows": {
+        "installMode": "passive"
+      }
+    }
+  },
   "bundle": {
     "active": true,
     "targets": "all",
+    "createUpdaterArtifacts": true,
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",

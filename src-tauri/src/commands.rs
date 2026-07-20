@@ -57,3 +57,12 @@ pub fn get_icon(backend: State<Backend>, path: String) -> Option<String> {
         Backend::Remote(c) => c.icon(path),
     }
 }
+
+// Shut down the elevated helper before an update installs, so it stops holding
+// the .exe open (the unelevated installer can't kill an elevated process).
+#[tauri::command]
+pub fn shutdown_helper(backend: State<Backend>) {
+    if let Backend::Remote(c) = backend.inner() {
+        let _ = c.shutdown();
+    }
+}
