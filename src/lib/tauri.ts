@@ -10,5 +10,7 @@ export const killProcess = (pid: number) => invoke("kill_process", { pid });
 export const killProcessTree = (pid: number) => invoke("kill_process_tree", { pid });
 export const suspendProcess = (pid: number) => invoke("suspend_process", { pid });
 export const resumeProcess = (pid: number) => invoke("resume_process", { pid });
+export const toggleWidget = () => invoke("toggle_widget");
+export const openMainTab = (tab: string) => invoke("open_main_tab", { tab });
 
 export { revealItemInDir, writeText };

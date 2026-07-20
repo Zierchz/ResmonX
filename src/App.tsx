@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { listen } from "@tauri-apps/api/event";
 import { Sidebar } from "@/components/layout/Sidebar";
 import { Topbar } from "@/components/layout/Topbar";
 import { ConfirmProvider } from "@/components/process/ConfirmProvider";
@@ -58,6 +59,14 @@ export default function App() {
     };
     document.addEventListener("contextmenu", handler);
     return () => document.removeEventListener("contextmenu", handler);
+  }, []);
+
+  // The widget's row clicks ask the main window to switch tabs.
+  useEffect(() => {
+    const un = listen<string>("switch-tab", (e) => setTab(e.payload as TabId));
+    return () => {
+      void un.then((f) => f());
+    };
   }, []);
 
   return (
