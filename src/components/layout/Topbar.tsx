@@ -1,4 +1,3 @@
-import { toggleWidget } from "@/lib/tauri";
 import { UpdateButton } from "@/components/layout/UpdateButton";
 import type { Snapshot } from "@/lib/types";
 
@@ -17,17 +16,6 @@ export function Topbar({ title, snapshot: s }: { title: string; snapshot: Snapsh
           <span className="stat">{mem}</span>
           <span className="stat">{gpu}</span>
         </div>
-        <button
-          className="widget-btn"
-          onClick={() => void toggleWidget()}
-          title="Mostrar/ocultar widget flotante"
-        >
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
-            <rect x="3" y="4" width="18" height="16" rx="2" />
-            <rect x="12" y="12" width="7" height="6" rx="1" />
-          </svg>
-          Widget
-        </button>
         <UpdateButton />
       </div>
     </header>
