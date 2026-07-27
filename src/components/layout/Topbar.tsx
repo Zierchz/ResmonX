@@ -1,3 +1,4 @@
+import { AlertsButton } from "@/components/layout/AlertsButton";
 import { UpdateButton } from "@/components/layout/UpdateButton";
 import type { Snapshot } from "@/lib/types";
 
@@ -16,6 +17,7 @@ export function Topbar({ title, snapshot: s }: { title: string; snapshot: Snapsh
           <span className="stat">{mem}</span>
           <span className="stat">{gpu}</span>
         </div>
+        <AlertsButton snapshot={s} />
         <UpdateButton />
       </div>
     </header>
