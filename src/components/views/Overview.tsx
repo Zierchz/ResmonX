@@ -6,6 +6,7 @@ import { ProcIcon } from "@/components/tables/ProcIcon";
 import { ServiceBadge } from "@/components/tables/ServiceBadge";
 import { Subtabs } from "@/components/layout/Subtabs";
 import { fmtBytes, heat } from "@/lib/format";
+import { useI18n } from "@/lib/i18n";
 import { nameOrPid } from "@/lib/filters";
 import type { ProcessSnapshot, ServiceSnapshot } from "@/lib/types";
 import type { ViewProps } from "./props";
@@ -16,6 +17,7 @@ interface OvProc extends ProcessSnapshot {
 }
 
 export function Overview({ snapshot: s, history }: ViewProps) {
+  const { t } = useI18n();
   const [sub, setSub] = useState<"proc" | "svc">("proc");
 
   const netByPid = useMemo(
@@ -41,7 +43,7 @@ export function Overview({ snapshot: s, history }: ViewProps) {
     () => [
       {
         accessorKey: "name",
-        header: "Proceso",
+        header: t("col.process"),
         cell: ({ row }) => (
           <span className="pname">
             <ProcIcon exe={row.original.exe} />
@@ -52,7 +54,7 @@ export function Overview({ snapshot: s, history }: ViewProps) {
       { accessorKey: "pid", header: "PID", sortDescFirst: true, meta: { num: true } },
       {
         accessorKey: "cpu",
-        header: "CPU %",
+        header: t("col.cpuPct"),
         sortDescFirst: true,
         meta: { num: true, cellStyle: (r) => heat(r.cpu / 100) },
         cell: ({ row }) => row.original.cpu.toFixed(1),
@@ -66,27 +68,27 @@ export function Overview({ snapshot: s, history }: ViewProps) {
       },
       {
         accessorKey: "io",
-        header: "Disco/s",
+        header: t("col.diskPs"),
         sortDescFirst: true,
         meta: { num: true, cellStyle: (r) => heat(r.io / maxDisk) },
         cell: ({ row }) => fmtBytes(row.original.io, "/s"),
       },
       {
         accessorKey: "net",
-        header: "Red/s",
+        header: t("col.netPs"),
         sortDescFirst: true,
         meta: { num: true, cellStyle: (r) => (etw ? heat(r.net / maxNet) : undefined) },
         cell: ({ row }) => (etw ? fmtBytes(row.original.net, "/s") : "—"),
       },
-      { accessorKey: "threads", header: "Hilos", sortDescFirst: true, meta: { num: true } },
+      { accessorKey: "threads", header: t("col.threads"), sortDescFirst: true, meta: { num: true } },
     ],
-    [etw, maxMem, maxDisk, maxNet],
+    [etw, maxMem, maxDisk, maxNet, t],
   );
 
   const svcColumns = useMemo<ColumnDef<ServiceSnapshot, any>[]>(
     () => [
-      { accessorKey: "name", header: "Servicio" },
-      { accessorKey: "display", header: "Descripción" },
+      { accessorKey: "name", header: t("col.service") },
+      { accessorKey: "display", header: t("col.description") },
       {
         accessorKey: "pid",
         header: "PID",
@@ -95,17 +97,17 @@ export function Overview({ snapshot: s, history }: ViewProps) {
       },
       {
         accessorKey: "state",
-        header: "Estado",
+        header: t("col.state"),
         cell: ({ row }) => <ServiceBadge state={row.original.state} />,
       },
     ],
-    [],
+    [t],
   );
 
   return (
     <div className="split">
       <aside className="split-aside">
-        <h2 className="section-title first">Resumen</h2>
+        <h2 className="section-title first">{t("sec.summary")}</h2>
         <div className="cards stacked">
           <CpuCard s={s} history={history} />
           <MemCard s={s} history={history} />
@@ -115,11 +117,11 @@ export function Overview({ snapshot: s, history }: ViewProps) {
         </div>
       </aside>
       <div className="split-main">
-        <h2 className="section-title first">Detalle</h2>
+        <h2 className="section-title first">{t("sec.detail")}</h2>
         <Subtabs
           tabs={[
-            { id: "proc", label: "Procesos" },
-            { id: "svc", label: "Servicios" },
+            { id: "proc", label: t("sub.processes") },
+            { id: "svc", label: t("sub.services") },
           ]}
           active={sub}
           onChange={setSub}
@@ -129,7 +131,7 @@ export function Overview({ snapshot: s, history }: ViewProps) {
             data={rows}
             columns={procColumns}
             initialSorting={[{ id: "cpu", desc: true }]}
-            filter={{ placeholder: "Filtrar procesos…", fn: nameOrPid }}
+            filter={{ placeholder: t("filter.processes"), fn: nameOrPid }}
             rowTarget={(r) => ({ pid: r.pid, name: r.name, exe: r.exe })}
             getRowId={(r) => String(r.pid)}
           />

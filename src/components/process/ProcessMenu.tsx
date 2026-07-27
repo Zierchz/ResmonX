@@ -17,6 +17,7 @@ import {
   suspendProcess,
   writeText,
 } from "@/lib/tauri";
+import { useI18n } from "@/lib/i18n";
 import type { CtxTarget } from "@/lib/types";
 import { cn } from "@/lib/utils";
 
@@ -67,6 +68,7 @@ function Item({
 
 export function ProcessMenuProvider({ children }: { children: ReactNode }) {
   const confirm = useConfirm();
+  const { t } = useI18n();
   const [menu, setMenu] = useState<MenuState>(CLOSED);
 
   const open = useCallback<OpenFn>((e, target) => {
@@ -91,49 +93,49 @@ export function ProcessMenuProvider({ children }: { children: ReactNode }) {
     };
   }, [menu.open, close]);
 
-  const run = async (action: string, t: CtxTarget) => {
+  const run = async (action: string, p: CtxTarget) => {
     try {
       if (action === "kill") {
-        if (await confirm(`¿Finalizar el proceso "${t.name}" (PID ${t.pid})?`)) {
-          await killProcess(t.pid);
-          toast.success(`Proceso ${t.name} finalizado`);
+        if (await confirm(t("confirm.kill", { name: p.name, pid: p.pid }))) {
+          await killProcess(p.pid);
+          toast.success(t("toast.killed", { name: p.name }));
         }
       } else if (action === "kill-tree") {
-        if (await confirm(`¿Finalizar "${t.name}" (PID ${t.pid}) y todos sus procesos hijos?`)) {
-          await killProcessTree(t.pid);
-          toast.success(`Árbol de ${t.name} finalizado`);
+        if (await confirm(t("confirm.killTree", { name: p.name, pid: p.pid }))) {
+          await killProcessTree(p.pid);
+          toast.success(t("toast.treeKilled", { name: p.name }));
         }
       } else if (action === "suspend") {
-        await suspendProcess(t.pid);
-        toast.success(`Proceso ${t.name} suspendido`);
+        await suspendProcess(p.pid);
+        toast.success(t("toast.suspended", { name: p.name }));
       } else if (action === "resume") {
-        await resumeProcess(t.pid);
-        toast.success(`Proceso ${t.name} reanudado`);
+        await resumeProcess(p.pid);
+        toast.success(t("toast.resumed", { name: p.name }));
       } else if (action === "reveal") {
-        await revealItemInDir(t.exe);
+        await revealItemInDir(p.exe);
       } else if (action === "copy") {
-        await writeText(`${t.name} (PID ${t.pid})`);
-        toast.success("Copiado al portapapeles");
+        await writeText(`${p.name} (PID ${p.pid})`);
+        toast.success(t("toast.copied"));
       }
     } catch (e) {
       toast.error(`Error: ${e}`);
     }
   };
 
-  const t = menu.target;
+  const tgt = menu.target;
   // clamp to the viewport (menu is ~210x300)
   const left = Math.max(4, Math.min(menu.x, window.innerWidth - 216));
   const top = Math.max(4, Math.min(menu.y, window.innerHeight - 306));
 
   const act = (action: string) => {
     close();
-    if (t) run(action, t);
+    if (tgt) run(action, tgt);
   };
 
   return (
     <Ctx.Provider value={open}>
       {children}
-      {menu.open && t && (
+      {menu.open && tgt && (
         <div
           className="fixed z-[1000] min-w-52 rounded-md border bg-popover p-1 text-popover-foreground shadow-md"
           style={{ left, top }}
@@ -141,19 +143,19 @@ export function ProcessMenuProvider({ children }: { children: ReactNode }) {
           onContextMenu={(e) => e.preventDefault()}
         >
           <Item destructive onClick={() => act("kill")}>
-            Finalizar proceso
+            {t("menu.kill")}
           </Item>
           <Item destructive onClick={() => act("kill-tree")}>
-            Finalizar árbol de procesos
+            {t("menu.killTree")}
           </Item>
           <div className="-mx-1 my-1 h-px bg-border" />
-          <Item onClick={() => act("suspend")}>Suspender</Item>
-          <Item onClick={() => act("resume")}>Reanudar</Item>
+          <Item onClick={() => act("suspend")}>{t("menu.suspend")}</Item>
+          <Item onClick={() => act("resume")}>{t("menu.resume")}</Item>
           <div className="-mx-1 my-1 h-px bg-border" />
-          <Item disabled={t.exe.length === 0} onClick={() => act("reveal")}>
-            Abrir ubicación del archivo
+          <Item disabled={tgt.exe.length === 0} onClick={() => act("reveal")}>
+            {t("menu.reveal")}
           </Item>
-          <Item onClick={() => act("copy")}>Copiar</Item>
+          <Item onClick={() => act("copy")}>{t("menu.copy")}</Item>
         </div>
       )}
     </Ctx.Provider>

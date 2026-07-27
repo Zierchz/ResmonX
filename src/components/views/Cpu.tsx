@@ -8,6 +8,7 @@ import { ProcIcon } from "@/components/tables/ProcIcon";
 import { ServiceBadge } from "@/components/tables/ServiceBadge";
 import { Subtabs } from "@/components/layout/Subtabs";
 import { COLORS, heat } from "@/lib/format";
+import { useI18n } from "@/lib/i18n";
 import { nameOrPid, svcFilter } from "@/lib/filters";
 import type { ProcessSnapshot, ServiceSnapshot } from "@/lib/types";
 import type { ViewProps } from "./props";
@@ -18,6 +19,7 @@ interface SvcRow extends ServiceSnapshot {
 }
 
 export function Cpu({ snapshot: s, history }: ViewProps) {
+  const { t } = useI18n();
   const [sub, setSub] = useState<"proc" | "svc">("proc");
 
   const totalThreads = s.processes.reduce((a, p) => a + p.threads, 0);
@@ -31,7 +33,7 @@ export function Cpu({ snapshot: s, history }: ViewProps) {
     () => [
       {
         accessorKey: "name",
-        header: "Proceso",
+        header: t("col.process"),
         cell: ({ row }) => (
           <span className="pname">
             <ProcIcon exe={row.original.exe} />
@@ -40,22 +42,22 @@ export function Cpu({ snapshot: s, history }: ViewProps) {
         ),
       },
       { accessorKey: "pid", header: "PID", sortDescFirst: true, meta: { num: true } },
-      { accessorKey: "threads", header: "Hilos", sortDescFirst: true, meta: { num: true } },
+      { accessorKey: "threads", header: t("col.threads"), sortDescFirst: true, meta: { num: true } },
       {
         accessorKey: "cpu",
-        header: "CPU %",
+        header: t("col.cpuPct"),
         sortDescFirst: true,
         meta: { num: true, cellStyle: (r) => heat(r.cpu / 100) },
         cell: ({ row }) => row.original.cpu.toFixed(1),
       },
     ],
-    [],
+    [t],
   );
 
   const svcColumns = useMemo<ColumnDef<SvcRow, any>[]>(
     () => [
-      { accessorKey: "name", header: "Servicio" },
-      { accessorKey: "display", header: "Descripción" },
+      { accessorKey: "name", header: t("col.service") },
+      { accessorKey: "display", header: t("col.description") },
       {
         accessorKey: "pid",
         header: "PID",
@@ -64,47 +66,47 @@ export function Cpu({ snapshot: s, history }: ViewProps) {
       },
       {
         accessorKey: "state",
-        header: "Estado",
+        header: t("col.state"),
         cell: ({ row }) => <ServiceBadge state={row.original.state} />,
       },
       {
         accessorKey: "cpu",
-        header: "CPU %",
+        header: t("col.cpuPct"),
         sortDescFirst: true,
         meta: { num: true },
         cell: ({ row }) => (row.original.pid ? row.original.cpu.toFixed(1) : ""),
       },
     ],
-    [],
+    [t],
   );
 
   return (
     <div className="split">
       <aside className="split-aside">
-        <h2 className="section-title first">Resumen</h2>
+        <h2 className="section-title first">{t("sec.summary")}</h2>
         <div className="cards stacked">
           <CpuCard s={s} history={history} />
           <MetricCard
-            title="Frecuencia efectiva"
+            title={t("card.freq.title")}
             value={`${(s.cpu.freq_mhz / 1000).toFixed(2)} GHz`}
-            detail={`base ${(s.cpu.base_mhz / 1000).toFixed(2)} GHz`}
+            detail={t("card.freq.detail", { ghz: (s.cpu.base_mhz / 1000).toFixed(2) })}
             accent={COLORS.cpu}
           />
           <MetricCard
-            title="Procesos"
+            title={t("tab.processes")}
             value={`${s.processes.length}`}
-            detail={`${totalThreads} hilos · ${s.cpu.cores} núcleos lógicos`}
+            detail={t("card.procs.detail", { threads: totalThreads, cores: s.cpu.cores })}
             accent={COLORS.cpu}
           />
         </div>
       </aside>
       <div className="split-main">
-        <h2 className="section-title first">Núcleos lógicos</h2>
+        <h2 className="section-title first">{t("sec.cores")}</h2>
         <CoreGrid perCore={s.cpu.per_core} />
         <Subtabs
           tabs={[
-            { id: "proc", label: "Procesos" },
-            { id: "svc", label: "Servicios" },
+            { id: "proc", label: t("sub.processes") },
+            { id: "svc", label: t("sub.services") },
           ]}
           active={sub}
           onChange={setSub}
@@ -114,7 +116,7 @@ export function Cpu({ snapshot: s, history }: ViewProps) {
             data={s.processes}
             columns={procColumns}
             initialSorting={[{ id: "cpu", desc: true }]}
-            filter={{ placeholder: "Filtrar procesos…", fn: nameOrPid }}
+            filter={{ placeholder: t("filter.processes"), fn: nameOrPid }}
             rowTarget={(r) => ({ pid: r.pid, name: r.name, exe: r.exe })}
             getRowId={(r) => String(r.pid)}
           />
@@ -124,7 +126,7 @@ export function Cpu({ snapshot: s, history }: ViewProps) {
             data={svcRows}
             columns={svcColumns}
             initialSorting={[{ id: "name", desc: false }]}
-            filter={{ placeholder: "Filtrar servicios…", fn: svcFilter }}
+            filter={{ placeholder: t("filter.services"), fn: svcFilter }}
             getRowId={(r) => r.name}
           />
         )}

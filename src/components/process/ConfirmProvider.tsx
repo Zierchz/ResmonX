@@ -9,6 +9,7 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { useI18n } from "@/lib/i18n";
 
 type ConfirmFn = (message: string) => Promise<boolean>;
 
@@ -23,6 +24,7 @@ const noop = () => {};
 // Promise-based confirm() backed by a single AlertDialog (replaces the old
 // hand-rolled overlay dialog).
 export function ConfirmProvider({ children }: { children: ReactNode }) {
+  const { t } = useI18n();
   const [state, setState] = useState({ open: false, message: "" });
   const resolver = useRef<(v: boolean) => void>(noop);
 
@@ -50,13 +52,13 @@ export function ConfirmProvider({ children }: { children: ReactNode }) {
       >
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Confirmar acción</AlertDialogTitle>
+            <AlertDialogTitle>{t("confirm.title")}</AlertDialogTitle>
             <AlertDialogDescription>{state.message}</AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel onClick={() => close(false)}>Cancelar</AlertDialogCancel>
+            <AlertDialogCancel onClick={() => close(false)}>{t("confirm.cancel")}</AlertDialogCancel>
             <AlertDialogAction variant="destructive" onClick={() => close(true)}>
-              Confirmar
+              {t("confirm.ok")}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

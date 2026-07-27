@@ -7,7 +7,9 @@ import { ProcessMenuProvider } from "@/components/process/ProcessMenu";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { useSnapshot } from "@/hooks/useSnapshot";
+import { useI18n } from "@/lib/i18n";
 import { TITLES, type TabId } from "@/lib/tabs";
+import { setUiLanguage } from "@/lib/tauri";
 import { Overview } from "@/components/views/Overview";
 import { Cpu } from "@/components/views/Cpu";
 import { Memory } from "@/components/views/Memory";
@@ -49,6 +51,18 @@ function ViewSwitch({
 export default function App() {
   const [tab, setTab] = useState<TabId>("overview");
   const { snapshot, history } = useSnapshot();
+  const { t, lang } = useI18n();
+
+  // Retitle the tray menu and the window on startup and language change.
+  useEffect(() => {
+    void setUiLanguage({
+      widget: t("tray.widget"),
+      showMain: t("tray.show"),
+      autostart: t("settings.autostart"),
+      quit: t("tray.quit"),
+      title: t("title.main"),
+    });
+  }, [lang, t]);
 
   // Suppress the WebView's native context menu everywhere except text inputs
   // (Radix row menus handle their own preventDefault).
@@ -76,7 +90,7 @@ export default function App() {
           <div className="app-shell">
             <Sidebar active={tab} onSelect={setTab} />
             <div className="main-area">
-              <Topbar title={TITLES[tab]} snapshot={snapshot} />
+              <Topbar title={t(TITLES[tab])} snapshot={snapshot} />
               <main className="content">
                 {snapshot && <ViewSwitch tab={tab} snapshot={snapshot} history={history} />}
               </main>

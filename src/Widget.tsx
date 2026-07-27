@@ -6,6 +6,7 @@ import { DataTable } from "@/components/tables/DataTable";
 import { useSnapshot } from "@/hooks/useSnapshot";
 import { nameOrPid } from "@/lib/filters";
 import { ACCENT, fmtBytes, heat } from "@/lib/format";
+import { useI18n } from "@/lib/i18n";
 import type { TabId } from "@/lib/tabs";
 import { openMainTab } from "@/lib/tauri";
 import type { ProcessSnapshot } from "@/lib/types";
@@ -19,6 +20,7 @@ interface WProc extends ProcessSnapshot {
 
 // Compressed live metrics (mini-cards) plus the sortable, filterable process table.
 export function Widget() {
+  const { t } = useI18n();
   const { snapshot: s, history } = useSnapshot();
   const [opacity, setOpacity] = useState(() => {
     const v = Number(localStorage.getItem(OPACITY_KEY));
@@ -64,7 +66,7 @@ export function Widget() {
 
   const columns = useMemo<ColumnDef<WProc, any>[]>(
     () => [
-      { accessorKey: "name", header: "Proceso", meta: { path: true } },
+      { accessorKey: "name", header: t("col.process"), meta: { path: true } },
       {
         accessorKey: "cpu",
         header: "CPU",
@@ -81,13 +83,13 @@ export function Widget() {
       },
       {
         accessorKey: "net",
-        header: "Red",
+        header: t("col.net"),
         sortDescFirst: true,
         meta: { num: true, cellStyle: (r) => (etw ? heat(r.net / maxNet) : undefined) },
         cell: ({ row }) => (etw ? fmtBytes(row.original.net, "/s") : "—"),
       },
     ],
-    [etw, maxMem, maxNet],
+    [etw, maxMem, maxNet, t],
   );
 
   const cpu = s?.cpu.usage ?? 0;
@@ -111,9 +113,13 @@ export function Widget() {
           max={100}
           value={Math.round(opacity * 100)}
           onChange={(e) => setOp(Number(e.target.value) / 100)}
-          title="Opacidad"
+          title={t("widget.opacity")}
         />
-        <button className="wclose" onClick={() => void getCurrentWindow().hide()} title="Ocultar">
+        <button
+          className="wclose"
+          onClick={() => void getCurrentWindow().hide()}
+          title={t("widget.hide")}
+        >
           ✕
         </button>
       </div>
@@ -128,14 +134,14 @@ export function Widget() {
             )}
             <Tile
               tab="disk"
-              title="Disco"
+              title={t("tab.disk")}
               value={fmtBytes(read + write, "/s")}
               values={history.write}
               max={Math.max(...history.write, 1024 * 512)}
             />
             <Tile
               tab="network"
-              title="Red"
+              title={t("tab.network")}
               value={fmtBytes(rx + tx, "/s")}
               values={history.rx}
               max={Math.max(...history.rx, 1024 * 128)}
@@ -143,14 +149,14 @@ export function Widget() {
           </div>
 
           <button className="wproc-title" onClick={() => void openMainTab("processes")}>
-            Procesos
+            {t("tab.processes")}
           </button>
           <div className="wproc-area">
             <DataTable
               data={rows}
               columns={columns}
               initialSorting={[{ id: "cpu", desc: true }]}
-              filter={{ placeholder: "Filtrar procesos…", fn: nameOrPid }}
+              filter={{ placeholder: t("filter.processes"), fn: nameOrPid }}
               getRowId={(r) => String(r.pid)}
             />
           </div>
@@ -174,8 +180,9 @@ function Tile({
   values: number[];
   max: number;
 }) {
+  const { t } = useI18n();
   return (
-    <button className="wtile" onClick={() => void openMainTab(tab)} title="Abrir en ResmonX">
+    <button className="wtile" onClick={() => void openMainTab(tab)} title={t("widget.open")}>
       <div className="wtile-head">
         <span className="wtile-title">{title}</span>
         <span className="wtile-val mono">{value}</span>

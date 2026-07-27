@@ -11,5 +11,17 @@ export const killProcessTree = (pid: number) => invoke("kill_process_tree", { pi
 export const suspendProcess = (pid: number) => invoke("suspend_process", { pid });
 export const resumeProcess = (pid: number) => invoke("resume_process", { pid });
 export const openMainTab = (tab: string) => invoke("open_main_tab", { tab });
+export const getAutostart = () => invoke<boolean>("get_autostart");
+export const setAutostart = (enabled: boolean) => invoke("set_autostart", { enabled });
+
+// translated tray labels + window title (mirrors UiLabels in lib.rs)
+export interface UiLabels {
+  widget: string;
+  showMain: string;
+  autostart: string;
+  quit: string;
+  title: string;
+}
+export const setUiLanguage = (labels: UiLabels) => invoke("set_ui_language", { labels });
 
 export { revealItemInDir, writeText };

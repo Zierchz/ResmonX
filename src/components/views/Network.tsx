@@ -6,6 +6,7 @@ import { Sparkline } from "@/components/cards/Sparkline";
 import { DataTable } from "@/components/tables/DataTable";
 import { Subtabs } from "@/components/layout/Subtabs";
 import { COLORS, fmtBytes, heat } from "@/lib/format";
+import { useI18n } from "@/lib/i18n";
 import { connFilter, nameOrPid } from "@/lib/filters";
 import type { Connection, NetProcSnapshot } from "@/lib/types";
 import type { ViewProps } from "./props";
@@ -19,6 +20,7 @@ interface NetProcRow extends NetProcSnapshot {
 }
 
 export function Network({ snapshot: s, history }: ViewProps) {
+  const { t } = useI18n();
   const [sub, setSub] = useState<"proc" | "conns" | "listen">("proc");
 
   const tx = s.nics.reduce((a, n) => a + n.tx_bps, 0);
@@ -44,79 +46,79 @@ export function Network({ snapshot: s, history }: ViewProps) {
 
   const netColumns = useMemo<ColumnDef<NetProcRow, any>[]>(
     () => [
-      { accessorKey: "name", header: "Proceso" },
+      { accessorKey: "name", header: t("col.process") },
       { accessorKey: "pid", header: "PID", sortDescFirst: true, meta: { num: true } },
       {
         accessorKey: "sent_bps",
-        header: "Enviado/s",
+        header: t("col.sentPs"),
         sortDescFirst: true,
         meta: { num: true, cellStyle: (r) => heat(r.sent_bps / maxSent) },
         cell: ({ row }) => fmtBytes(row.original.sent_bps, "/s"),
       },
       {
         accessorKey: "recv_bps",
-        header: "Recibido/s",
+        header: t("col.recvPs"),
         sortDescFirst: true,
         meta: { num: true, cellStyle: (r) => heat(r.recv_bps / maxRecv) },
         cell: ({ row }) => fmtBytes(row.original.recv_bps, "/s"),
       },
       {
         accessorKey: "total",
-        header: "Total/s",
+        header: t("col.totalPs"),
         sortDescFirst: true,
         meta: { num: true, cellStyle: (r) => heat(r.total / maxTotal) },
         cell: ({ row }) => fmtBytes(row.original.total, "/s"),
       },
     ],
-    [maxSent, maxRecv, maxTotal],
+    [maxSent, maxRecv, maxTotal, t],
   );
 
   const connColumns = useMemo<ColumnDef<Connection, any>[]>(
     () => [
-      { accessorKey: "process", header: "Proceso" },
+      { accessorKey: "process", header: t("col.process") },
       { accessorKey: "pid", header: "PID", sortDescFirst: true, meta: { num: true } },
       { accessorKey: "protocol", header: "Proto" },
       { accessorKey: "local", header: "Local" },
-      { accessorKey: "remote", header: "Remoto" },
-      { accessorKey: "state", header: "Estado" },
+      { accessorKey: "remote", header: t("col.remote") },
+      { accessorKey: "state", header: t("col.state") },
     ],
-    [],
+    [t],
   );
 
   const listenColumns = useMemo<ColumnDef<Connection, any>[]>(
     () => [
-      { accessorKey: "process", header: "Proceso" },
+      { accessorKey: "process", header: t("col.process") },
       { accessorKey: "pid", header: "PID", sortDescFirst: true, meta: { num: true } },
       { accessorKey: "protocol", header: "Proto" },
-      { accessorKey: "local", header: "Dirección local" },
+      { accessorKey: "local", header: t("col.localAddr") },
     ],
-    [],
+    [t],
   );
 
   return (
     <div className="split">
       <aside className="split-aside">
-        <h2 className="section-title first">Resumen</h2>
+        <h2 className="section-title first">{t("sec.summary")}</h2>
         <div className="cards stacked">
           <NetCard s={s} history={history} />
           <MetricCard
-            title="Subida"
+            title={t("card.upload")}
             value={fmtBytes(tx, "/s")}
-            detail={`${activeNics} interfaces activas`}
+            detail={t("card.upload.detail", { n: activeNics })}
             accent={COLORS.net}
           >
             <Sparkline values={history.tx} max={Math.max(...history.tx, 1024 * 128)} color={COLORS.net} />
           </MetricCard>
           <MetricCard
-            title="Conexiones"
+            title={t("sub.connections")}
             value={`${s.connections.length}`}
-            detail="TCP/UDP activas y en escucha"
+            detail={t("card.conns.detail")}
             accent={COLORS.net}
           />
         </div>
       </aside>
       <div className="split-main">
-        <h2 className="section-title first">Por interfaz</h2>
+        <h2 className="section-title first">{t("sec.perNic")}</h2>
         <div className="cards">
           {nics.map((n) => (
             <MetricCard
@@ -130,24 +132,22 @@ export function Network({ snapshot: s, history }: ViewProps) {
         </div>
         <Subtabs
           tabs={[
-            { id: "proc", label: "Procesos" },
-            { id: "conns", label: "Conexiones" },
-            { id: "listen", label: "Escucha" },
+            { id: "proc", label: t("sub.processes") },
+            { id: "conns", label: t("sub.connections") },
+            { id: "listen", label: t("sub.listening") },
           ]}
           active={sub}
           onChange={setSub}
         />
         {sub === "proc" &&
           (!s.etw ? (
-            <div className="notice">
-              Ejecuta ResmonX como administrador para ver la actividad de red por proceso.
-            </div>
+            <div className="notice">{t("notice.etwNet")}</div>
           ) : (
             <DataTable
               data={netData}
               columns={netColumns}
               initialSorting={[{ id: "total", desc: true }]}
-              filter={{ placeholder: "Filtrar procesos…", fn: nameOrPid }}
+              filter={{ placeholder: t("filter.processes"), fn: nameOrPid }}
               rowTarget={(r) => ({ pid: r.pid, name: r.name, exe: "" })}
               getRowId={(r) => String(r.pid)}
             />
@@ -157,7 +157,7 @@ export function Network({ snapshot: s, history }: ViewProps) {
             data={connsData}
             columns={connColumns}
             initialSorting={[{ id: "process", desc: false }]}
-            filter={{ placeholder: "Filtrar conexiones…", fn: connFilter }}
+            filter={{ placeholder: t("filter.connections"), fn: connFilter }}
           />
         )}
         {sub === "listen" && (

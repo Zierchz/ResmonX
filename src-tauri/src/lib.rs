@@ -4,9 +4,29 @@ mod monitor;
 
 use commands::Backend;
 use monitor::MonitorState;
-use tauri::menu::{Menu, MenuItem, PredefinedMenuItem};
+use tauri::menu::{CheckMenuItem, Menu, MenuItem, PredefinedMenuItem};
 use tauri::tray::TrayIconBuilder;
 use tauri::{Emitter, Manager, WebviewUrl, WebviewWindowBuilder, WindowEvent};
+use tauri_plugin_autostart::{MacosLauncher, ManagerExt};
+
+// Tray menu item handles: autostart sync + retitling on language change.
+struct TrayMenu {
+    widget: MenuItem<tauri::Wry>,
+    show_main: MenuItem<tauri::Wry>,
+    autostart: CheckMenuItem<tauri::Wry>,
+    quit: MenuItem<tauri::Wry>,
+}
+
+// Translated labels sent by the frontend on startup and language change.
+#[derive(serde::Deserialize)]
+#[serde(rename_all = "camelCase")]
+struct UiLabels {
+    widget: String,
+    show_main: String,
+    autostart: String,
+    quit: String,
+    title: String,
+}
 
 fn arg_value(args: &[String], key: &str) -> Option<String> {
     let i = args.iter().position(|a| a == key)?;
@@ -61,6 +81,37 @@ fn toggle_widget(app: tauri::AppHandle) {
     build_widget(&app);
 }
 
+#[tauri::command]
+fn get_autostart(app: tauri::AppHandle) -> bool {
+    app.autolaunch().is_enabled().unwrap_or(false)
+}
+
+#[tauri::command]
+fn set_autostart(
+    app: tauri::AppHandle,
+    tray: tauri::State<TrayMenu>,
+    enabled: bool,
+) -> Result<(), String> {
+    let al = app.autolaunch();
+    let res = if enabled { al.enable() } else { al.disable() };
+    res.map_err(|e| e.to_string())?;
+    let _ = tray.autostart.set_checked(enabled);
+    Ok(())
+}
+
+#[tauri::command]
+fn set_ui_language(app: tauri::AppHandle, labels: UiLabels) {
+    if let Some(m) = app.try_state::<TrayMenu>() {
+        let _ = m.widget.set_text(&labels.widget);
+        let _ = m.show_main.set_text(&labels.show_main);
+        let _ = m.autostart.set_text(&labels.autostart);
+        let _ = m.quit.set_text(&labels.quit);
+    }
+    if let Some(w) = app.get_webview_window("main") {
+        let _ = w.set_title(&labels.title);
+    }
+}
+
 // Bring the main window forward and switch it to the given tab.
 #[tauri::command]
 fn open_main_tab(app: tauri::AppHandle, tab: String) {
@@ -110,12 +161,19 @@ pub fn run() {
         }
     };
 
+    // Launched by Windows at logon: stay in the tray, don't show the window.
+    let autostart_launch = args.iter().any(|a| a == "--autostart");
+
     tauri::Builder::default()
         .plugin(tauri_plugin_opener::init())
         .plugin(tauri_plugin_clipboard_manager::init())
         .plugin(tauri_plugin_updater::Builder::new().build())
         .plugin(tauri_plugin_process::init())
         .plugin(tauri_plugin_notification::init())
+        .plugin(tauri_plugin_autostart::init(
+            MacosLauncher::LaunchAgent,
+            Some(vec!["--autostart"]),
+        ))
         .manage(backend)
         .on_window_event(|window, event| {
             // Closing the main window minimizes to tray instead of quitting;
@@ -127,20 +185,54 @@ pub fn run() {
                 }
             }
         })
-        .setup(|app| {
-            // Tray: toggle widget, restore main, quit.
+        .setup(move |app| {
+            // The window is created hidden (tauri.conf.json); show it only on
+            // manual launches so autostart stays in the tray.
+            if !autostart_launch {
+                if let Some(w) = app.get_webview_window("main") {
+                    let _ = w.show();
+                }
+            }
+
+            // Tray: toggle widget, restore main, autostart, quit.
             let widget_i =
                 MenuItem::with_id(app, "widget", "Mostrar/ocultar widget", true, None::<&str>)?;
             let main_i =
                 MenuItem::with_id(app, "show_main", "Mostrar ResmonX", true, None::<&str>)?;
+            let auto_on = app.autolaunch().is_enabled().unwrap_or(false);
+            let auto_i = CheckMenuItem::with_id(
+                app,
+                "autostart",
+                "Iniciar con Windows",
+                true,
+                auto_on,
+                None::<&str>,
+            )?;
             let sep = PredefinedMenuItem::separator(app)?;
+            let sep2 = PredefinedMenuItem::separator(app)?;
             let quit_i = MenuItem::with_id(app, "quit", "Salir", true, None::<&str>)?;
-            let menu = Menu::with_items(app, &[&widget_i, &main_i, &sep, &quit_i])?;
+            let menu = Menu::with_items(app, &[&widget_i, &main_i, &sep, &auto_i, &sep2, &quit_i])?;
+            app.manage(TrayMenu {
+                widget: widget_i,
+                show_main: main_i,
+                autostart: auto_i,
+                quit: quit_i,
+            });
             let mut tray = TrayIconBuilder::new()
                 .menu(&menu)
                 .tooltip("ResmonX")
                 .on_menu_event(|app, event| match event.id().as_ref() {
                     "widget" => toggle_widget(app.clone()),
+                    "autostart" => {
+                        // the check item toggles itself on click; apply that state
+                        let on = app
+                            .state::<TrayMenu>()
+                            .autostart
+                            .is_checked()
+                            .unwrap_or(false);
+                        let al = app.autolaunch();
+                        let _ = if on { al.enable() } else { al.disable() };
+                    }
                     "show_main" => {
                         if let Some(w) = app.get_webview_window("main") {
                             let _ = w.show();
@@ -166,6 +258,9 @@ pub fn run() {
             commands::shutdown_helper,
             toggle_widget,
             open_main_tab,
+            get_autostart,
+            set_autostart,
+            set_ui_language,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

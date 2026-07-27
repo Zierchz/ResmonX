@@ -8,6 +8,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { fmtBytes } from "@/lib/format";
+import { useI18n } from "@/lib/i18n";
 import {
   loadAlertSettings,
   newTracker,
@@ -71,6 +72,7 @@ function Row({
 // Bell in the topbar: threshold settings popover + the detection loop that
 // fires native Windows notifications on sustained high usage.
 export function AlertsButton({ snapshot: s }: { snapshot: Snapshot | null }) {
+  const { t } = useI18n();
   const [settings, setSettings] = useState<AlertSettings>(loadAlertSettings);
   const trackers = useRef({ cpu: newTracker(), mem: newTracker(), disk: newTracker() });
 
@@ -82,24 +84,24 @@ export function AlertsButton({ snapshot: s }: { snapshot: Snapshot | null }) {
   useEffect(() => {
     if (!s) return;
     const now = Date.now();
-    const t = trackers.current;
+    const tr = trackers.current;
 
-    if (track(t.cpu, s.cpu.usage, settings.cpu, now)) {
+    if (track(tr.cpu, s.cpu.usage, settings.cpu, now)) {
       const top = topBy(s.processes, (p) => p.cpu);
       void notify(
-        `CPU al ${s.cpu.usage.toFixed(0)}%`,
-        `Uso sostenido por encima del ${settings.cpu.threshold}%.` +
-          (top ? ` Mayor consumo: ${top.name} (${top.cpu.toFixed(0)}%).` : ""),
+        t("notif.cpu.title", { pct: s.cpu.usage.toFixed(0) }),
+        t("notif.cpu.body", { th: settings.cpu.threshold }) +
+          (top ? t("notif.top", { name: top.name, v: `${top.cpu.toFixed(0)}%` }) : ""),
       );
     }
 
     const memPct = (s.memory.used / s.memory.total) * 100;
-    if (track(t.mem, memPct, settings.mem, now)) {
+    if (track(tr.mem, memPct, settings.mem, now)) {
       const top = topBy(s.processes, (p) => p.memory);
       void notify(
-        `RAM al ${memPct.toFixed(0)}%`,
-        `Memoria sostenida por encima del ${settings.mem.threshold}%.` +
-          (top ? ` Mayor consumo: ${top.name} (${fmtBytes(top.memory)}).` : ""),
+        t("notif.mem.title", { pct: memPct.toFixed(0) }),
+        t("notif.mem.body", { th: settings.mem.threshold }) +
+          (top ? t("notif.top", { name: top.name, v: fmtBytes(top.memory) }) : ""),
       );
     }
 
@@ -107,33 +109,36 @@ export function AlertsButton({ snapshot: s }: { snapshot: Snapshot | null }) {
       (a, d) => (!a || d.active_pct > a.active_pct ? d : a),
       null,
     );
-    if (disk && track(t.disk, disk.active_pct, settings.disk, now)) {
+    if (disk && track(tr.disk, disk.active_pct, settings.disk, now)) {
       const top = topBy(s.processes, (p) => p.read_bps + p.write_bps);
       void notify(
-        `Disco ${disk.mount.replace(/\\$/, "")} al ${disk.active_pct.toFixed(0)}%`,
-        `Actividad sostenida por encima del ${settings.disk.threshold}%.` +
-          (top ? ` Mayor E/S: ${top.name} (${fmtBytes(top.read_bps + top.write_bps, "/s")}).` : ""),
+        t("notif.disk.title", {
+          mount: disk.mount.replace(/\\$/, ""),
+          pct: disk.active_pct.toFixed(0),
+        }),
+        t("notif.disk.body", { th: settings.disk.threshold }) +
+          (top
+            ? t("notif.topIo", { name: top.name, v: fmtBytes(top.read_bps + top.write_bps, "/s") })
+            : ""),
       );
     }
-  }, [s, settings]);
+  }, [s, settings, t]);
 
   const allOff = !settings.cpu.enabled && !settings.mem.enabled && !settings.disk.enabled;
 
   return (
     <Popover>
-      <PopoverTrigger className="widget-btn" title="Avisos de rendimiento">
+      <PopoverTrigger className="widget-btn" title={t("alerts.title")}>
         {allOff ? <BellOffIcon /> : <BellIcon />}
       </PopoverTrigger>
       <PopoverContent align="end" className="w-64">
-        <div className="mb-1 text-sm font-semibold">Avisos de rendimiento</div>
-        <p className="mb-3 text-xs text-muted-foreground">
-          Notificación de Windows cuando una métrica supera su umbral de forma sostenida (~15 s).
-        </p>
+        <div className="mb-1 text-sm font-semibold">{t("alerts.title")}</div>
+        <p className="mb-3 text-xs text-muted-foreground">{t("alerts.desc")}</p>
         <div className="flex flex-col gap-2">
           <Row label="CPU" rule={settings.cpu} onChange={(r) => update({ ...settings, cpu: r })} />
           <Row label="RAM" rule={settings.mem} onChange={(r) => update({ ...settings, mem: r })} />
           <Row
-            label="Disco (actividad)"
+            label={t("alerts.disk")}
             rule={settings.disk}
             onChange={(r) => update({ ...settings, disk: r })}
           />

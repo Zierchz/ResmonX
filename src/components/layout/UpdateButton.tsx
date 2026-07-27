@@ -1,15 +1,16 @@
 import { RefreshCwIcon, DownloadIcon, LoaderIcon } from "lucide-react";
 import { useConfirm } from "@/components/process/ConfirmProvider";
 import { useUpdate } from "@/hooks/useUpdate";
+import { useI18n } from "@/lib/i18n";
 
 export function UpdateButton() {
   const { status, version, progress, checkNow, install } = useUpdate();
   const confirm = useConfirm();
+  const { t } = useI18n();
 
   const onClick = async () => {
     if (status === "available") {
-      const msg = `Hay una nueva versión disponible (${version}). Se instalará y la app se reiniciará.`;
-      if (await confirm(msg)) void install();
+      if (await confirm(t("update.confirm", { v: version ?? "" }))) void install();
       return;
     }
     if (status !== "checking" && status !== "downloading") void checkNow();
@@ -20,14 +21,14 @@ export function UpdateButton() {
   const pulse = status === "available";
   const title =
     status === "available"
-      ? `Actualizar a la versión ${version}`
+      ? t("update.install", { v: version ?? "" })
       : status === "downloading"
-        ? "Descargando actualización…"
+        ? t("update.downloading")
         : status === "checking"
-          ? "Buscando actualizaciones…"
+          ? t("update.checking")
           : status === "error"
-            ? "Error al buscar; reintentar"
-            : "Buscar actualizaciones";
+            ? t("update.retry")
+            : t("update.check");
 
   return (
     <button

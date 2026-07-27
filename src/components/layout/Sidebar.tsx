@@ -1,17 +1,16 @@
 import type { ReactNode } from "react";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import { useI18n } from "@/lib/i18n";
 import { cn } from "@/lib/utils";
-import type { TabId } from "@/lib/tabs";
+import { TITLES, type TabId } from "@/lib/tabs";
 
-const TABS: { id: TabId; label: string; icon: ReactNode }[] = [
+const TABS: { id: TabId; icon: ReactNode }[] = [
   {
     id: "overview",
-    label: "Resumen",
     icon: <img className="nav-logo" src="/logo.svg" alt="" width={24} height={24} />,
   },
   {
     id: "cpu",
-    label: "CPU",
     icon: (
       <svg viewBox="0 0 20 20" aria-hidden="true">
         <rect x="6" y="6" width="8" height="8" rx="1" />
@@ -22,7 +21,6 @@ const TABS: { id: TabId; label: string; icon: ReactNode }[] = [
   },
   {
     id: "memory",
-    label: "Memoria",
     icon: (
       <svg viewBox="0 0 20 20" aria-hidden="true">
         <rect x="2.5" y="6" width="15" height="8" rx="1" />
@@ -32,7 +30,6 @@ const TABS: { id: TabId; label: string; icon: ReactNode }[] = [
   },
   {
     id: "disk",
-    label: "Disco",
     icon: (
       <svg viewBox="0 0 20 20" aria-hidden="true">
         <ellipse cx="10" cy="5.5" rx="6.5" ry="2.5" />
@@ -42,7 +39,6 @@ const TABS: { id: TabId; label: string; icon: ReactNode }[] = [
   },
   {
     id: "network",
-    label: "Red",
     icon: (
       <svg viewBox="0 0 20 20" aria-hidden="true">
         <path d="M3 13l4-4 3 3 7-7M17 5v4M17 5h-4" />
@@ -52,7 +48,6 @@ const TABS: { id: TabId; label: string; icon: ReactNode }[] = [
   },
   {
     id: "processes",
-    label: "Procesos",
     icon: (
       <svg viewBox="0 0 20 20" aria-hidden="true">
         <path d="M4 5h12M4 10h12M4 15h12" />
@@ -62,7 +57,6 @@ const TABS: { id: TabId; label: string; icon: ReactNode }[] = [
   },
   {
     id: "gpu",
-    label: "GPU",
     icon: (
       <svg viewBox="0 0 20 20" aria-hidden="true">
         <rect x="2.5" y="5" width="15" height="10" rx="1.5" />
@@ -74,21 +68,22 @@ const TABS: { id: TabId; label: string; icon: ReactNode }[] = [
 ];
 
 export function Sidebar({ active, onSelect }: { active: TabId; onSelect: (t: TabId) => void }) {
+  const { t } = useI18n();
   return (
     <aside className="sidebar">
       <nav className="nav">
-        {TABS.map((t) => (
-          <Tooltip key={t.id}>
+        {TABS.map((tab) => (
+          <Tooltip key={tab.id}>
             <TooltipTrigger asChild>
               <button
-                className={cn("nav-item", active === t.id && "active")}
-                onClick={() => onSelect(t.id)}
-                aria-label={t.label}
+                className={cn("nav-item", active === tab.id && "active")}
+                onClick={() => onSelect(tab.id)}
+                aria-label={t(TITLES[tab.id])}
               >
-                {t.icon}
+                {tab.icon}
               </button>
             </TooltipTrigger>
-            <TooltipContent side="right">{t.label}</TooltipContent>
+            <TooltipContent side="right">{t(TITLES[tab.id])}</TooltipContent>
           </Tooltip>
         ))}
       </nav>

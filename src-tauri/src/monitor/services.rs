@@ -12,15 +12,16 @@ pub struct ServiceSnapshot {
     pub state: String,
 }
 
+// stable codes; the frontend translates them for display
 fn state_str(state: u32) -> String {
     match state {
-        1 => "Detenido",
-        2 => "Iniciando",
-        3 => "Deteniéndose",
-        4 => "En ejecución",
-        5 => "Reanudando",
-        6 => "Pausando",
-        7 => "En pausa",
+        1 => "stopped",
+        2 => "starting",
+        3 => "stopping",
+        4 => "running",
+        5 => "resuming",
+        6 => "pausing",
+        7 => "paused",
         _ => "?",
     }
     .into()
