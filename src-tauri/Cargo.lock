@@ -3434,7 +3434,7 @@ dependencies = [
 
 [[package]]
 name = "resmonx"
-version = "0.5.2"
+version = "0.6.0"
 dependencies = [
  "ferrisetw",
  "image",

@@ -1,6 +1,6 @@
 [package]
 name = "resmonx"
-version = "0.5.2"
+version = "0.6.0"
 description = "Monitor de recursos para Windows"
 authors = ["Zierchz"]
 license-file = "../LICENSE"
