@@ -17,6 +17,7 @@ import { Disk } from "@/components/views/Disk";
 import { Network } from "@/components/views/Network";
 import { Processes } from "@/components/views/Processes";
 import { Gpu } from "@/components/views/Gpu";
+import { Battery } from "@/components/views/Battery";
 import type { History, Snapshot } from "@/lib/types";
 
 function ViewSwitch({
@@ -43,6 +44,8 @@ function ViewSwitch({
       return <Processes snapshot={snapshot} history={history} />;
     case "gpu":
       return <Gpu snapshot={snapshot} history={history} />;
+    case "battery":
+      return <Battery snapshot={snapshot} history={history} />;
     default:
       return null;
   }

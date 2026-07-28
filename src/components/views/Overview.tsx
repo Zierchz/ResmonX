@@ -1,6 +1,13 @@
 import { useMemo, useState } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
-import { CpuCard, DiskCard, GpuCard, MemCard, NetCard } from "@/components/cards/resourceCards";
+import {
+  BatteryCard,
+  CpuCard,
+  DiskCard,
+  GpuCard,
+  MemCard,
+  NetCard,
+} from "@/components/cards/resourceCards";
 import { DataTable } from "@/components/tables/DataTable";
 import { ProcIcon } from "@/components/tables/ProcIcon";
 import { ServiceBadge } from "@/components/tables/ServiceBadge";
@@ -114,6 +121,7 @@ export function Overview({ snapshot: s, history }: ViewProps) {
           <NetCard s={s} history={history} />
           <DiskCard s={s} history={history} />
           {s.gpu && <GpuCard s={s} history={history} />}
+          {s.battery && <BatteryCard s={s} history={history} />}
         </div>
       </aside>
       <div className="split-main">

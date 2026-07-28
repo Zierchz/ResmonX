@@ -16,7 +16,7 @@ function push(arr: number[], v: number) {
 }
 
 function emptyHistory(): History {
-  return { cpu: [], mem: [], rx: [], tx: [], gpu: [], read: [], write: [] };
+  return { cpu: [], mem: [], rx: [], tx: [], gpu: [], read: [], write: [], batt: [], battMw: [] };
 }
 
 // Polls get_snapshot every POLL_MS. History rings live in a ref (no re-render
@@ -39,6 +39,8 @@ export function useSnapshot() {
         push(h.gpu, s.gpu?.utilization ?? 0);
         push(h.read, s.processes.reduce((a, p) => a + p.read_bps, 0));
         push(h.write, s.processes.reduce((a, p) => a + p.write_bps, 0));
+        push(h.batt, s.battery?.percent ?? 0);
+        push(h.battMw, Math.abs(s.battery?.rate_mw ?? 0));
         setSnapshot(s);
       } catch (e) {
         console.error("snapshot error", e);

@@ -1,8 +1,8 @@
 import { MetricCard } from "./MetricCard";
 import { Sparkline } from "./Sparkline";
 import { COLORS, fmtBytes } from "@/lib/format";
-import { useI18n } from "@/lib/i18n";
-import type { History, Snapshot } from "@/lib/types";
+import { useI18n, type MsgKey } from "@/lib/i18n";
+import type { BatterySnapshot, History, Snapshot } from "@/lib/types";
 
 // Canonical cards, identical in Overview and each section.
 
@@ -73,6 +73,31 @@ export function DiskCard({ s, history }: { s: Snapshot; history: History }) {
         max={Math.max(...history.write, 1024 * 512)}
         color={COLORS.disk}
       />
+    </MetricCard>
+  );
+}
+
+// i18n key of the current battery state
+export function battState(b: BatterySnapshot): MsgKey {
+  if (b.charging) return "batt.charging";
+  if (b.discharging) return "batt.discharging";
+  if (!b.ac_online) return "batt.idle";
+  return b.percent >= 95 ? "batt.full" : "batt.limited";
+}
+
+export function BatteryCard({ s, history }: { s: Snapshot; history: History }) {
+  const { t } = useI18n();
+  if (!s.battery) return null;
+  const b = s.battery;
+  const state = t(battState(b));
+  return (
+    <MetricCard
+      title={t("tab.battery")}
+      value={`${b.percent.toFixed(0)}%`}
+      detail={b.rate_mw !== 0 ? `${state} · ${(Math.abs(b.rate_mw) / 1000).toFixed(1)} W` : state}
+      accent={COLORS.batt}
+    >
+      <Sparkline values={history.batt} max={100} color={COLORS.batt} />
     </MetricCard>
   );
 }

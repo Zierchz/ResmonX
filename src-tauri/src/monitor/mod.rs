@@ -1,3 +1,4 @@
+mod battery;
 pub mod control;
 mod cpufreq;
 mod etw;
@@ -98,6 +99,7 @@ pub struct Snapshot {
     disks: Vec<DiskSnapshot>,
     services: Vec<services::ServiceSnapshot>,
     gpu: Option<gpu::GpuSnapshot>,
+    battery: Option<battery::BatterySnapshot>,
     etw: bool,
     net_procs: Vec<NetProcSnapshot>,
     file_activity: Vec<FileActivitySnapshot>,
@@ -110,6 +112,7 @@ struct Inner {
     networks: Networks,
     disks: Disks,
     gpu: gpu::GpuMonitor,
+    battery: battery::BatteryMonitor,
     cpufreq: cpufreq::CpuFreq,
     counters: pdh::SysCounters,
     etw: etw::EtwMonitor,
@@ -138,6 +141,7 @@ impl MonitorState {
             networks: Networks::new_with_refreshed_list(),
             disks,
             gpu: gpu::GpuMonitor::new(),
+            battery: battery::BatteryMonitor::new(),
             cpufreq: cpufreq::CpuFreq::new(),
             counters: pdh::SysCounters::new(&instances),
             etw: etw::EtwMonitor::new(),
@@ -293,6 +297,7 @@ impl MonitorState {
         disks,
         services: services::collect(),
         gpu: inner.gpu.snapshot(&names),
+        battery: inner.battery.snapshot(),
         etw: inner.etw.available(),
         net_procs,
         file_activity,

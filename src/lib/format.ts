@@ -9,6 +9,7 @@ export const COLORS = {
   net: ACCENT,
   disk: ACCENT,
   gpu: ACCENT,
+  batt: ACCENT,
 };
 
 export function fmtBytes(b: number, suffix = ""): string {

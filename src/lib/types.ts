@@ -105,6 +105,21 @@ export interface GpuSnapshot {
   processes: GpuProcess[];
 }
 
+export interface BatterySnapshot {
+  percent: number;
+  ac_online: boolean;
+  charging: boolean;
+  discharging: boolean;
+  saver: boolean;
+  rate_mw: number;
+  remaining_mwh: number;
+  full_mwh: number;
+  design_mwh: number;
+  voltage_mv: number;
+  chemistry: string;
+  time_remaining_s: number | null;
+}
+
 export interface Snapshot {
   cpu: CpuSnapshot;
   memory: MemorySnapshot;
@@ -114,6 +129,7 @@ export interface Snapshot {
   disks: DiskSnapshot[];
   services: ServiceSnapshot[];
   gpu: GpuSnapshot | null;
+  battery: BatterySnapshot | null;
   etw: boolean;
   net_procs: NetProcSnapshot[];
   file_activity: FileActivitySnapshot[];
@@ -128,6 +144,8 @@ export interface History {
   gpu: number[];
   read: number[];
   write: number[];
+  batt: number[];
+  battMw: number[];
 }
 
 // process target for the row context menu

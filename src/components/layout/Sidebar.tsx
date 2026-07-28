@@ -65,6 +65,16 @@ const TABS: { id: TabId; icon: ReactNode }[] = [
       </svg>
     ),
   },
+  {
+    id: "battery",
+    icon: (
+      <svg viewBox="0 0 20 20" aria-hidden="true">
+        <rect x="2" y="6.5" width="13.5" height="7" rx="1.5" />
+        <path d="M15.5 8.5H17a.8.8 0 0 1 .8.8v1.4a.8.8 0 0 1-.8.8h-1.5" />
+        <path d="M9.5 8l-1.5 2h3l-1.5 2" />
+      </svg>
+    ),
+  },
 ];
 
 export function Sidebar({ active, onSelect }: { active: TabId; onSelect: (t: TabId) => void }) {
