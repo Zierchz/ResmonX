@@ -744,4 +744,9 @@
     max-width: 0;
     width: 100%;
   }
+  /* toasts portal to the body, outside .widget: narrow them so they fit the
+     widget window instead of being clipped by it */
+  .widget-view [data-sonner-toaster] {
+    --width: 264px;
+  }
 }

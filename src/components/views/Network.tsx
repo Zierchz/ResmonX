@@ -1,14 +1,17 @@
 import { useMemo, useState } from "react";
 import type { ColumnDef } from "@tanstack/react-table";
+import { toast } from "sonner";
 import { NetCard } from "@/components/cards/resourceCards";
 import { MetricCard } from "@/components/cards/MetricCard";
 import { Sparkline } from "@/components/cards/Sparkline";
 import { DataTable } from "@/components/tables/DataTable";
 import { Subtabs } from "@/components/layout/Subtabs";
+import { Button } from "@/components/ui/button";
 import { COLORS, fmtBytes, heat } from "@/lib/format";
 import { useI18n } from "@/lib/i18n";
 import { connFilter, nameOrPid } from "@/lib/filters";
-import type { Connection, NetProcSnapshot } from "@/lib/types";
+import { removeFirewallRule } from "@/lib/tauri";
+import type { Connection, FirewallRule, NetProcSnapshot } from "@/lib/types";
 import type { ViewProps } from "./props";
 
 // UDP has no state; TCP listeners report a LISTEN state.
@@ -21,7 +24,7 @@ interface NetProcRow extends NetProcSnapshot {
 
 export function Network({ snapshot: s, history }: ViewProps) {
   const { t } = useI18n();
-  const [sub, setSub] = useState<"proc" | "conns" | "listen">("proc");
+  const [sub, setSub] = useState<"proc" | "conns" | "listen" | "rules">("proc");
 
   const tx = s.nics.reduce((a, n) => a + n.tx_bps, 0);
   const activeNics = s.nics.filter((n) => n.rx_bps > 0 || n.tx_bps > 0).length;
@@ -32,12 +35,33 @@ export function Network({ snapshot: s, history }: ViewProps) {
     [s.nics],
   );
 
+  // Every process, not just the ones with traffic right now: ETW only reports a
+  // process while it moves bytes, so filtering by that made rows appear and
+  // vanish on each tick and the table jump around. Idle processes read 0.
+  const netByPid = useMemo(() => new Map(s.net_procs.map((p) => [p.pid, p])), [s.net_procs]);
   const netData = useMemo<NetProcRow[]>(
-    () => s.net_procs.map((p) => ({ ...p, total: p.sent_bps + p.recv_bps })),
-    [s.net_procs],
+    () =>
+      s.processes
+        .map((p) => {
+          const n = netByPid.get(p.pid);
+          const sent_bps = n?.sent_bps ?? 0;
+          const recv_bps = n?.recv_bps ?? 0;
+          return { pid: p.pid, name: p.name, sent_bps, recv_bps, total: sent_bps + recv_bps };
+        })
+        // Alphabetical so ties resolve the same way every tick: sorting is
+        // stable, and the backend's CPU order would reshuffle the idle rows.
+        .sort((a, b) => a.name.localeCompare(b.name)),
+    [s.processes, netByPid],
   );
   const connsData = useMemo(() => s.connections.filter((c) => !isListening(c)), [s.connections]);
   const listenData = useMemo(() => s.connections.filter(isListening), [s.connections]);
+
+  // connection and ETW rows only carry a PID; the exe path comes from the
+  // process list and is what the firewall rules and "open location" need
+  const exeByPid = useMemo(
+    () => new Map(s.processes.map((p) => [p.pid, p.exe])),
+    [s.processes],
+  );
 
   // per-column maxima for the heatmap
   const maxSent = Math.max(1, ...s.net_procs.map((p) => p.sent_bps));
@@ -95,6 +119,39 @@ export function Network({ snapshot: s, history }: ViewProps) {
     [t],
   );
 
+  const unblock = async (rule: FirewallRule) => {
+    try {
+      await removeFirewallRule(rule.id);
+      toast.success(t("toast.unblocked", { name: rule.label }));
+    } catch (e) {
+      toast.error(`Error: ${e}`);
+    }
+  };
+
+  const ruleColumns = useMemo<ColumnDef<FirewallRule, any>[]>(
+    () => [
+      {
+        accessorKey: "kind",
+        header: t("col.kind"),
+        cell: ({ row }) =>
+          t(row.original.kind === "process" ? "fw.kindProcess" : "fw.kindIp"),
+      },
+      { accessorKey: "label", header: t("col.blocked") },
+      { accessorKey: "target", header: t("col.match"), meta: { path: true } },
+      {
+        id: "unblock",
+        header: "",
+        enableSorting: false,
+        cell: ({ row }) => (
+          <Button variant="outline" size="xs" onClick={() => void unblock(row.original)}>
+            {t("fw.unblock")}
+          </Button>
+        ),
+      },
+    ],
+    [t],
+  );
+
   return (
     <div className="split">
       <aside className="split-aside">
@@ -135,6 +192,7 @@ export function Network({ snapshot: s, history }: ViewProps) {
             { id: "proc", label: t("sub.processes") },
             { id: "conns", label: t("sub.connections") },
             { id: "listen", label: t("sub.listening") },
+            { id: "rules", label: t("sub.rules") },
           ]}
           active={sub}
           onChange={setSub}
@@ -148,7 +206,11 @@ export function Network({ snapshot: s, history }: ViewProps) {
               columns={netColumns}
               initialSorting={[{ id: "total", desc: true }]}
               filter={{ placeholder: t("filter.processes"), fn: nameOrPid }}
-              rowTarget={(r) => ({ pid: r.pid, name: r.name, exe: "" })}
+              rowTarget={(r) => ({
+                pid: r.pid,
+                name: r.name,
+                exe: exeByPid.get(r.pid) ?? "",
+              })}
               getRowId={(r) => String(r.pid)}
             />
           ))}
@@ -158,15 +220,37 @@ export function Network({ snapshot: s, history }: ViewProps) {
             columns={connColumns}
             initialSorting={[{ id: "process", desc: false }]}
             filter={{ placeholder: t("filter.connections"), fn: connFilter }}
+            rowTarget={(r) => ({
+              pid: r.pid,
+              name: r.process,
+              exe: exeByPid.get(r.pid) ?? "",
+              conn: { protocol: r.protocol, local: r.local, remote: r.remote },
+            })}
           />
         )}
+        {/* listeners have no remote peer and no TCB to close: process actions only */}
         {sub === "listen" && (
           <DataTable
             data={listenData}
             columns={listenColumns}
             initialSorting={[{ id: "process", desc: false }]}
+            rowTarget={(r) => ({
+              pid: r.pid,
+              name: r.process,
+              exe: exeByPid.get(r.pid) ?? "",
+            })}
           />
         )}
+        {sub === "rules" &&
+          (s.firewall_rules.length === 0 ? (
+            <div className="notice">{t("notice.noRules")}</div>
+          ) : (
+            <DataTable
+              data={s.firewall_rules}
+              columns={ruleColumns}
+              getRowId={(r) => String(r.id)}
+            />
+          ))}
       </div>
     </div>
   );

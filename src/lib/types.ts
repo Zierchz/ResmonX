@@ -120,6 +120,14 @@ export interface BatterySnapshot {
   time_remaining_s: number | null;
 }
 
+// active WFP block rule (dropped when ResmonX exits)
+export interface FirewallRule {
+  id: number;
+  kind: "process" | "ip";
+  target: string;
+  label: string;
+}
+
 export interface Snapshot {
   cpu: CpuSnapshot;
   memory: MemorySnapshot;
@@ -133,6 +141,7 @@ export interface Snapshot {
   etw: boolean;
   net_procs: NetProcSnapshot[];
   file_activity: FileActivitySnapshot[];
+  firewall_rules: FirewallRule[];
 }
 
 // rolling history for sparklines
@@ -148,9 +157,17 @@ export interface History {
   battMw: number[];
 }
 
+// the connection a row points at, when it has one
+export interface CtxConn {
+  protocol: string;
+  local: string;
+  remote: string;
+}
+
 // process target for the row context menu
 export interface CtxTarget {
   pid: number;
   name: string;
   exe: string;
+  conn?: CtxConn;
 }

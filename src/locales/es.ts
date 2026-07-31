@@ -24,6 +24,7 @@ export const es = {
   "sub.files": "Por archivo",
   "sub.connections": "Conexiones",
   "sub.listening": "Escucha",
+  "sub.rules": "Reglas",
 
   "col.process": "Proceso",
   "col.cpuPct": "CPU %",
@@ -42,6 +43,8 @@ export const es = {
   "col.recvPs": "Recibido/s",
   "col.totalPs": "Total/s",
   "col.remote": "Remoto",
+  "col.blocked": "Bloqueado",
+  "col.match": "Coincidencia",
   "col.localAddr": "Dirección local",
   "col.drive": "Unidad",
   "col.fs": "Sistema",
@@ -110,6 +113,11 @@ export const es = {
 
   "notice.etwDisk": "Ejecuta ResmonX como administrador para ver la actividad de disco por archivo.",
   "notice.etwNet": "Ejecuta ResmonX como administrador para ver la actividad de red por proceso.",
+  "notice.noRules":
+    "No hay bloqueos activos. Se crean desde el menú contextual de un proceso o una conexión, y desaparecen al cerrar ResmonX.",
+  "fw.kindProcess": "Proceso",
+  "fw.kindIp": "IP remota",
+  "fw.unblock": "Desbloquear",
 
   "menu.kill": "Finalizar proceso",
   "menu.killTree": "Finalizar árbol de procesos",
@@ -117,13 +125,27 @@ export const es = {
   "menu.resume": "Reanudar",
   "menu.reveal": "Abrir ubicación del archivo",
   "menu.copy": "Copiar",
+  "menu.closeConn": "Cerrar conexión",
+  "menu.closeConn.only4": "Solo se pueden cerrar conexiones TCP sobre IPv4.",
+  "menu.blockNet": "Bloquear red del proceso",
+  "menu.blockNet.noExe": "No se conoce la ruta del ejecutable.",
+  "menu.blockIp": "Bloquear IP remota ({ip})",
   "confirm.kill": "¿Finalizar el proceso \"{name}\" (PID {pid})?",
   "confirm.killTree": "¿Finalizar \"{name}\" (PID {pid}) y todos sus procesos hijos?",
+  "confirm.closeConn": "¿Cerrar la conexión de \"{name}\" con {remote}?",
+  "confirm.blockNet":
+    "¿Bloquear todo el tráfico de red de \"{name}\"? Afecta a todas las instancias de {exe} y cierra sus conexiones TCP activas. La regla desaparece al cerrar ResmonX.",
+  "confirm.blockIp":
+    "¿Bloquear todo el tráfico hacia {ip}? Afecta a todo el equipo y la regla desaparece al cerrar ResmonX.",
   "toast.killed": "Proceso {name} finalizado",
   "toast.treeKilled": "Árbol de {name} finalizado",
   "toast.suspended": "Proceso {name} suspendido",
   "toast.resumed": "Proceso {name} reanudado",
   "toast.copied": "Copiado al portapapeles",
+  "toast.connClosed": "Conexión con {remote} cerrada",
+  "toast.netBlocked": "Red de {name} bloqueada",
+  "toast.ipBlocked": "Tráfico hacia {ip} bloqueado",
+  "toast.unblocked": "{name} desbloqueado",
 
   "confirm.title": "Confirmar acción",
   "confirm.cancel": "Cancelar",

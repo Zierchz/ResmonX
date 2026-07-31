@@ -2,6 +2,7 @@ mod battery;
 pub mod control;
 mod cpufreq;
 mod etw;
+pub mod firewall;
 mod gpu;
 pub mod icons;
 mod net;
@@ -103,6 +104,7 @@ pub struct Snapshot {
     etw: bool,
     net_procs: Vec<NetProcSnapshot>,
     file_activity: Vec<FileActivitySnapshot>,
+    firewall_rules: Vec<firewall::Rule>,
 }
 
 pub struct MonitorState(Mutex<Inner>);
@@ -301,6 +303,7 @@ impl MonitorState {
         etw: inner.etw.available(),
         net_procs,
         file_activity,
+        firewall_rules: firewall::rules(),
     }
     }
 }

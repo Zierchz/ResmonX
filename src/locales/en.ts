@@ -26,6 +26,7 @@ export const en: Record<keyof typeof es, string> = {
   "sub.files": "By file",
   "sub.connections": "Connections",
   "sub.listening": "Listening",
+  "sub.rules": "Rules",
 
   "col.process": "Process",
   "col.cpuPct": "CPU %",
@@ -44,6 +45,8 @@ export const en: Record<keyof typeof es, string> = {
   "col.recvPs": "Received/s",
   "col.totalPs": "Total/s",
   "col.remote": "Remote",
+  "col.blocked": "Blocked",
+  "col.match": "Match",
   "col.localAddr": "Local address",
   "col.drive": "Drive",
   "col.fs": "File system",
@@ -112,6 +115,11 @@ export const en: Record<keyof typeof es, string> = {
 
   "notice.etwDisk": "Run ResmonX as administrator to see per-file disk activity.",
   "notice.etwNet": "Run ResmonX as administrator to see per-process network activity.",
+  "notice.noRules":
+    "No active blocks. Create them from the context menu of a process or a connection; they disappear when ResmonX exits.",
+  "fw.kindProcess": "Process",
+  "fw.kindIp": "Remote IP",
+  "fw.unblock": "Unblock",
 
   "menu.kill": "End process",
   "menu.killTree": "End process tree",
@@ -119,13 +127,27 @@ export const en: Record<keyof typeof es, string> = {
   "menu.resume": "Resume",
   "menu.reveal": "Open file location",
   "menu.copy": "Copy",
+  "menu.closeConn": "Close connection",
+  "menu.closeConn.only4": "Only TCP over IPv4 connections can be closed.",
+  "menu.blockNet": "Block the process's network",
+  "menu.blockNet.noExe": "The executable path is unknown.",
+  "menu.blockIp": "Block remote IP ({ip})",
   "confirm.kill": "End process \"{name}\" (PID {pid})?",
   "confirm.killTree": "End \"{name}\" (PID {pid}) and all its child processes?",
+  "confirm.closeConn": "Close the connection from \"{name}\" to {remote}?",
+  "confirm.blockNet":
+    "Block all network traffic from \"{name}\"? This affects every instance of {exe} and closes its live TCP connections. The rule disappears when ResmonX exits.",
+  "confirm.blockIp":
+    "Block all traffic to {ip}? This affects the whole machine and the rule disappears when ResmonX exits.",
   "toast.killed": "Process {name} ended",
   "toast.treeKilled": "Process tree of {name} ended",
   "toast.suspended": "Process {name} suspended",
   "toast.resumed": "Process {name} resumed",
   "toast.copied": "Copied to clipboard",
+  "toast.connClosed": "Connection to {remote} closed",
+  "toast.netBlocked": "Network of {name} blocked",
+  "toast.ipBlocked": "Traffic to {ip} blocked",
+  "toast.unblocked": "{name} unblocked",
 
   "confirm.title": "Confirm action",
   "confirm.cancel": "Cancel",

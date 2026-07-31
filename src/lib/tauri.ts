@@ -10,6 +10,12 @@ export const killProcess = (pid: number) => invoke("kill_process", { pid });
 export const killProcessTree = (pid: number) => invoke("kill_process_tree", { pid });
 export const suspendProcess = (pid: number) => invoke("suspend_process", { pid });
 export const resumeProcess = (pid: number) => invoke("resume_process", { pid });
+export const closeConnection = (pid: number, local: string, remote: string) =>
+  invoke("close_connection", { pid, local, remote });
+export const blockProcessNet = (pid: number, exe: string, label: string) =>
+  invoke("block_process_net", { pid, exe, label });
+export const blockRemoteIp = (ip: string) => invoke("block_remote_ip", { ip });
+export const removeFirewallRule = (id: number) => invoke("remove_firewall_rule", { id });
 export const openMainTab = (tab: string) => invoke("open_main_tab", { tab });
 export const getAutostart = () => invoke<boolean>("get_autostart");
 export const setAutostart = (enabled: boolean) => invoke("set_autostart", { enabled });

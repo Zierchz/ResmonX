@@ -157,6 +157,7 @@ export function Widget() {
               columns={columns}
               initialSorting={[{ id: "cpu", desc: true }]}
               filter={{ placeholder: t("filter.processes"), fn: nameOrPid }}
+              rowTarget={(r) => ({ pid: r.pid, name: r.name, exe: r.exe })}
               getRowId={(r) => String(r.pid)}
             />
           </div>

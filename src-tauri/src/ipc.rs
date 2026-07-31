@@ -1,6 +1,6 @@
 // UI/helper split: the window runs unelevated (so ASUS "Target Mode" keeps it
 // lit) while an elevated helper does the monitoring over a named pipe.
-use crate::monitor::{control, icons, MonitorState};
+use crate::monitor::{control, firewall, icons, MonitorState};
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
 use std::ffi::c_void;
@@ -45,6 +45,18 @@ enum Req {
     KillTree(u32),
     Suspend(u32),
     Resume(u32),
+    CloseConn {
+        pid: u32,
+        local: String,
+        remote: String,
+    },
+    BlockProcess {
+        pid: u32,
+        exe: String,
+        label: String,
+    },
+    BlockIp(String),
+    Unblock(u64),
     Icon(String),
     Shutdown,
 }
@@ -227,6 +239,18 @@ impl PipeClient {
     pub fn resume(&self, pid: u32) -> Result<(), String> {
         self.action(Req::Resume(pid))
     }
+    pub fn close_conn(&self, pid: u32, local: String, remote: String) -> Result<(), String> {
+        self.action(Req::CloseConn { pid, local, remote })
+    }
+    pub fn block_process(&self, pid: u32, exe: String, label: String) -> Result<(), String> {
+        self.action(Req::BlockProcess { pid, exe, label })
+    }
+    pub fn block_ip(&self, ip: String) -> Result<(), String> {
+        self.action(Req::BlockIp(ip))
+    }
+    pub fn unblock(&self, id: u64) -> Result<(), String> {
+        self.action(Req::Unblock(id))
+    }
     // Ask the helper to exit so the updater can replace the locked .exe.
     pub fn shutdown(&self) -> Result<(), String> {
         self.action(Req::Shutdown)
@@ -253,6 +277,14 @@ fn handle_req(req: Req, state: &MonitorState) -> Resp {
         Req::KillTree(pid) => Resp::Action(control::kill_process_tree(pid)),
         Req::Suspend(pid) => Resp::Action(control::suspend_process(pid)),
         Req::Resume(pid) => Resp::Action(control::resume_process(pid)),
+        Req::CloseConn { pid, local, remote } => {
+            Resp::Action(control::close_connection(pid, &local, &remote))
+        }
+        Req::BlockProcess { pid, exe, label } => {
+            Resp::Action(firewall::block_process(pid, &exe, &label))
+        }
+        Req::BlockIp(ip) => Resp::Action(firewall::block_ip(&ip)),
+        Req::Unblock(id) => Resp::Action(firewall::unblock(id)),
         Req::Icon(path) => Resp::Icon(icons::get_icon(path)),
         Req::Shutdown => Resp::Action(Ok(())),
     }
