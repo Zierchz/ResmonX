@@ -510,18 +510,11 @@ code {
   font-size: 14px;
 }
 
-.note,
 .req {
   max-width: 720px;
   margin: 0 auto;
   font-size: 14.5px;
   color: var(--mut);
-}
-
-.note {
-  border-left: 2px solid var(--signal);
-  padding: 9px 0 9px 15px;
-  margin-bottom: 16px;
 }
 
 /* pie */

@@ -75,7 +75,7 @@
               Ver el código
             </a>
           </div>
-          <p class="meta reveal" data-i18n="hero_meta">Windows 10 / 11 &nbsp;·&nbsp; MIT &nbsp;·&nbsp; ~2&nbsp;MB &nbsp;·&nbsp; sin telemetría</p>
+          <p class="meta reveal" data-i18n="hero_meta">Windows 10 / 11 &nbsp;·&nbsp; MIT &nbsp;·&nbsp; ~4&nbsp;MB &nbsp;·&nbsp; sin telemetría</p>
         </div>
       </section>
 
@@ -92,9 +92,9 @@
         <h2 class="reveal" data-i18n="feat_title">Todo lo que ves, y lo que otros esconden</h2>
         <div class="grid">
           <article class="card reveal">
-            <span class="tag" data-i18n="c1_tag">7 vistas</span>
+            <span class="tag" data-i18n="c1_tag">8 vistas</span>
             <h3 data-i18n="c1_h">Todo el sistema, de un vistazo</h3>
-            <p data-i18n="c1_p">Resumen, CPU, memoria, disco, red, procesos y GPU. La misma información que el Monitor de recursos, ordenada para leerse.</p>
+            <p data-i18n="c1_p">Resumen, CPU, memoria, disco, red, procesos, GPU y batería. La misma información que el Monitor de recursos, ordenada para leerse.</p>
           </article>
           <article class="card reveal">
             <span class="tag" data-i18n="c2_tag">etw</span>
@@ -104,7 +104,12 @@
           <article class="card reveal">
             <span class="tag" data-i18n="c3_tag">acciones</span>
             <h3 data-i18n="c3_h">Control con clic derecho</h3>
-            <p data-i18n="c3_p">Finaliza, finaliza el árbol, suspende o reanuda un proceso; abre su ubicación o copia su ruta.</p>
+            <p data-i18n="c3_p">Finaliza, finaliza el árbol, suspende o reanuda un proceso; abre su ubicación o copia su ruta. En cualquier tabla, incluido el widget.</p>
+          </article>
+          <article class="card reveal">
+            <span class="tag" data-i18n="c10_tag">cortafuegos</span>
+            <h3 data-i18n="c10_h">Corta y bloquea la red</h3>
+            <p data-i18n="c10_p">Cierra una conexión TCP concreta, o bloquea toda la red de un proceso o de una IP remota. Las reglas se borran al cerrar ResmonX: nadie se queda sin internet por un olvido.</p>
           </article>
           <article class="card reveal">
             <span class="tag" data-i18n="c4_tag">orden</span>
@@ -114,12 +119,27 @@
           <article class="card reveal">
             <span class="tag" data-i18n="c5_tag">ligero</span>
             <h3 data-i18n="c5_h">Pesa lo que debe pesar</h3>
-            <p data-i18n="c5_p">Hecho con Tauri (Rust + WebView2). Sin navegador empaquetado: el instalador ronda los dos megas.</p>
+            <p data-i18n="c5_p">Hecho con Tauri (Rust + WebView2). Sin navegador empaquetado: el instalador no llega a los cuatro megas.</p>
           </article>
           <article class="card reveal">
             <span class="tag" data-i18n="c6_tag">honesto</span>
             <h3 data-i18n="c6_h">Sin cuentas, sin telemetría</h3>
             <p data-i18n="c6_p">No recoge datos ni oculta procesos. Código abierto con licencia MIT que puedes leer entero.</p>
+          </article>
+          <article class="card reveal">
+            <span class="tag" data-i18n="c7_tag">alertas</span>
+            <h3 data-i18n="c7_h">Te avisa cuando algo se dispara</h3>
+            <p data-i18n="c7_p">Notificaciones nativas de Windows cuando la CPU, la RAM o el disco se mantienen altos, señalando al proceso responsable. Umbrales a tu gusto.</p>
+          </article>
+          <article class="card reveal">
+            <span class="tag" data-i18n="c8_tag">widget</span>
+            <h3 data-i18n="c8_h">Siempre a la vista</h3>
+            <p data-i18n="c8_p">Widget flotante con métricas en vivo y bandeja del sistema: cierra la ventana y ResmonX sigue vigilando. Puede arrancar con Windows.</p>
+          </article>
+          <article class="card reveal">
+            <span class="tag" data-i18n="c9_tag">al día</span>
+            <h3 data-i18n="c9_h">Se actualiza solo</h3>
+            <p data-i18n="c9_p">Comprueba nuevas versiones e instala actualizaciones firmadas sin perder tu configuración. Interfaz en español y en inglés.</p>
           </article>
         </div>
       </section>
@@ -138,14 +158,10 @@
           </li>
           <li class="reveal">
             <span class="step-n">03</span>
-            <span data-i18n="step3">Abre ResmonX. Pedirá elevación para activar la red por proceso y el disco por archivo (ETW).</span>
+            <span data-i18n="step3">Abre ResmonX. Pedirá elevación para activar la red por proceso, el disco por archivo (ETW) y el control de red.</span>
           </li>
         </ol>
-        <p class="note reveal" data-i18n="note">
-          Como todavía no está firmado con un certificado de código, Windows puede mostrar un aviso de
-          SmartScreen la primera vez. Continúa con <em>Más información → Ejecutar de todas formas</em>.
-        </p>
-        <p class="req reveal" data-i18n="req">Requisitos: Windows 10 u 11. GPU: métricas solo en tarjetas NVIDIA.</p>
+        <p class="req reveal" data-i18n="req">Requisitos: Windows 10 u 11.</p>
       </section>
     </main>
 
@@ -170,36 +186,47 @@
             "Un monitor de recursos ligero y honesto, con el estilo del Administrador de tareas — pero mostrando lo que otros ocultan.",
           cta_download: "Descargar para Windows",
           cta_code: "Ver el código",
-          hero_meta: "Windows 10 / 11 &nbsp;·&nbsp; MIT &nbsp;·&nbsp; ~2&nbsp;MB &nbsp;·&nbsp; sin telemetría",
+          hero_meta: "Windows 10 / 11 &nbsp;·&nbsp; MIT &nbsp;·&nbsp; ~4&nbsp;MB &nbsp;·&nbsp; sin telemetría",
           feat_eyebrow: "Qué muestra",
           feat_title: "Todo lo que ves, y lo que otros esconden",
-          c1_tag: "7 vistas",
+          c1_tag: "8 vistas",
           c1_h: "Todo el sistema, de un vistazo",
-          c1_p: "Resumen, CPU, memoria, disco, red, procesos y GPU. La misma información que el Monitor de recursos, ordenada para leerse.",
+          c1_p: "Resumen, CPU, memoria, disco, red, procesos, GPU y batería. La misma información que el Monitor de recursos, ordenada para leerse.",
           c2_tag: "etw",
           c2_h: "Red por proceso, disco por archivo",
           c2_p: "Qué proceso usa la red y qué archivo se lee o escribe, en tiempo real, con trazas ETW del kernel.",
           c3_tag: "acciones",
           c3_h: "Control con clic derecho",
-          c3_p: "Finaliza, finaliza el árbol, suspende o reanuda un proceso; abre su ubicación o copia su ruta.",
+          c3_p: "Finaliza, finaliza el árbol, suspende o reanuda un proceso; abre su ubicación o copia su ruta. En cualquier tabla, incluido el widget.",
+          c10_tag: "cortafuegos",
+          c10_h: "Corta y bloquea la red",
+          c10_p: "Cierra una conexión TCP concreta, o bloquea toda la red de un proceso o de una IP remota. Las reglas se borran al cerrar ResmonX: nadie se queda sin internet por un olvido.",
           c4_tag: "orden",
           c4_h: "Tablas que responden",
           c4_p: "Ordena cualquier columna con un clic y un mapa de calor resalta al instante lo que consume tus recursos.",
           c5_tag: "ligero",
           c5_h: "Pesa lo que debe pesar",
-          c5_p: "Hecho con Tauri (Rust + WebView2). Sin navegador empaquetado: el instalador ronda los dos megas.",
+          c5_p: "Hecho con Tauri (Rust + WebView2). Sin navegador empaquetado: el instalador no llega a los cuatro megas.",
           c6_tag: "honesto",
           c6_h: "Sin cuentas, sin telemetría",
           c6_p: "No recoge datos ni oculta procesos. Código abierto con licencia MIT que puedes leer entero.",
+          c7_tag: "alertas",
+          c7_h: "Te avisa cuando algo se dispara",
+          c7_p: "Notificaciones nativas de Windows cuando la CPU, la RAM o el disco se mantienen altos, señalando al proceso responsable. Umbrales a tu gusto.",
+          c8_tag: "widget",
+          c8_h: "Siempre a la vista",
+          c8_p: "Widget flotante con métricas en vivo y bandeja del sistema: cierra la ventana y ResmonX sigue vigilando. Puede arrancar con Windows.",
+          c9_tag: "al día",
+          c9_h: "Se actualiza solo",
+          c9_p: "Comprueba nuevas versiones e instala actualizaciones firmadas sin perder tu configuración. Interfaz en español y en inglés.",
           inst_eyebrow: "Instalación",
           inst_title: "Listo en tres pasos",
           step1:
             'Descarga el instalador desde la <a href="https://github.com/Zierchz/ResmonX/releases/latest" target="_blank" rel="noopener">última versión</a>.',
           step2:
             'Ejecuta <code>ResmonX-Setup.exe</code>. Se instala en tu usuario, sin permisos de administrador.',
-          step3: "Abre ResmonX. Pedirá elevación para activar la red por proceso y el disco por archivo (ETW).",
-          note: 'Como todavía no está firmado con un certificado de código, Windows puede mostrar un aviso de SmartScreen la primera vez. Continúa con <em>Más información → Ejecutar de todas formas</em>.',
-          req: "Requisitos: Windows 10 u 11. GPU: métricas solo en tarjetas NVIDIA.",
+          step3: "Abre ResmonX. Pedirá elevación para activar la red por proceso, el disco por archivo (ETW) y el control de red.",
+          req: "Requisitos: Windows 10 u 11.",
           footer_left: "ResmonX · Licencia MIT",
         },
         en: {
@@ -215,36 +242,47 @@
             "A lightweight, honest resource monitor with the look of Task Manager — but showing what others hide.",
           cta_download: "Download for Windows",
           cta_code: "View the code",
-          hero_meta: "Windows 10 / 11 &nbsp;·&nbsp; MIT &nbsp;·&nbsp; ~2&nbsp;MB &nbsp;·&nbsp; no telemetry",
+          hero_meta: "Windows 10 / 11 &nbsp;·&nbsp; MIT &nbsp;·&nbsp; ~4&nbsp;MB &nbsp;·&nbsp; no telemetry",
           feat_eyebrow: "What it shows",
           feat_title: "Everything you see — and what others hide",
-          c1_tag: "7 views",
+          c1_tag: "8 views",
           c1_h: "The whole system, at a glance",
-          c1_p: "Overview, CPU, memory, disk, network, processes and GPU. The same data as Resource Monitor, laid out to be read.",
+          c1_p: "Overview, CPU, memory, disk, network, processes, GPU and battery. The same data as Resource Monitor, laid out to be read.",
           c2_tag: "etw",
           c2_h: "Network per process, disk per file",
           c2_p: "Which process uses the network and which file is read or written, in real time, via kernel ETW traces.",
           c3_tag: "actions",
           c3_h: "Right-click control",
-          c3_p: "End, end tree, suspend or resume a process; open its location or copy its path.",
+          c3_p: "End, end tree, suspend or resume a process; open its location or copy its path. In any table, the widget included.",
+          c10_tag: "firewall",
+          c10_h: "Cut and block network traffic",
+          c10_p: "Close one specific TCP connection, or block a whole process or a remote IP. Rules are dropped when ResmonX exits, so a forgotten block never leaves you offline.",
           c4_tag: "sort",
           c4_h: "Tables that respond",
           c4_p: "Sort any column with a click, and a heatmap instantly highlights what's eating your resources.",
           c5_tag: "light",
           c5_h: "As small as it should be",
-          c5_p: "Built with Tauri (Rust + WebView2). No bundled browser: the installer is around two megabytes.",
+          c5_p: "Built with Tauri (Rust + WebView2). No bundled browser: the installer is under four megabytes.",
           c6_tag: "honest",
           c6_h: "No accounts, no telemetry",
           c6_p: "It collects no data and hides no processes. Open source under the MIT license, readable in full.",
+          c7_tag: "alerts",
+          c7_h: "Warns you when something spikes",
+          c7_p: "Native Windows notifications when CPU, RAM or disk stays high, naming the process responsible. Thresholds you control.",
+          c8_tag: "widget",
+          c8_h: "Always in sight",
+          c8_p: "A floating widget with live metrics plus a system tray: close the window and ResmonX keeps watching. It can start with Windows.",
+          c9_tag: "up to date",
+          c9_h: "Updates itself",
+          c9_p: "Checks for new releases and installs signed updates in place, keeping your setup. UI in English and Spanish.",
           inst_eyebrow: "Install",
           inst_title: "Ready in three steps",
           step1:
             'Download the installer from the <a href="https://github.com/Zierchz/ResmonX/releases/latest" target="_blank" rel="noopener">latest release</a>.',
           step2:
             'Run <code>ResmonX-Setup.exe</code>. It installs per user, with no administrator rights.',
-          step3: "Open ResmonX. It will request elevation to enable per-process network and per-file disk activity (ETW).",
-          note: "Since it isn't code-signed yet, Windows may show a SmartScreen prompt the first time. Continue with <em>More info → Run anyway</em>.",
-          req: "Requirements: Windows 10 or 11. GPU: metrics on NVIDIA cards only.",
+          step3: "Open ResmonX. It will request elevation to enable per-process network, per-file disk activity (ETW) and network control.",
+          req: "Requirements: Windows 10 or 11.",
           footer_left: "ResmonX · MIT License",
         },
       };
