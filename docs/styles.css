@@ -236,7 +236,7 @@ a {
   stroke: var(--signal-hot);
   stroke-linecap: round;
   stroke-linejoin: round;
-  stroke-dasharray: 74 9000;
+  stroke-dasharray: 26 1000;
   animation: flow 5.7s cubic-bezier(0.42, 0, 0.5, 1) infinite;
 }
 
@@ -257,21 +257,21 @@ a {
 
 @keyframes flow {
   0% {
-    stroke-dashoffset: 74;
+    stroke-dashoffset: 26;
     opacity: 0;
   }
   5% {
     opacity: 1;
   }
   62% {
-    stroke-dashoffset: -2100;
+    stroke-dashoffset: -1000;
     opacity: 1;
   }
   70% {
     opacity: 0;
   }
   100% {
-    stroke-dashoffset: -2100;
+    stroke-dashoffset: -1000;
     opacity: 0;
   }
 }
